@@ -13,7 +13,7 @@ PHOTOS_FOLDER = 'photos'
 
 
 # Start command
-def start(update: Update) -> int:
+def start(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         "Привет, для начала заполним твою анкету. "
         "Как тебя зовут?"
@@ -24,7 +24,7 @@ def start(update: Update) -> int:
 # Function to handle user's name
 def get_name(update: Update, context: CallbackContext) -> int:
     name = update.message.text
-    user_portfolios[update.message.chat_id] = {"name": name}
+    user_portfolios[update.message.chat_id] = {"name": name, "likes_received": {}, "likes_sent": {}}
     context.user_data["name"] = name
     update.message.reply_text(
         f"Приятно познакомиться, {user_portfolios[update.message.chat_id]['name']}! Сколько тебе лет?"
@@ -117,7 +117,6 @@ def get_photo(update: Update, context: CallbackContext) -> int:
     # Store the file path in user_data
     user_portfolios[update.message.chat_id]["photo"] = photo_path
     context.user_data["photo"] = photo_path
-    print(user_portfolios)
     update.message.reply_text(
         "Регистрация завершена! \nВведи /search для поиска знакомств."
     )
@@ -135,13 +134,37 @@ def cancel(update: Update) -> int:
 
 def search(update: Update, context: CallbackContext) -> int:
     user_id = update.message.from_user.id
+    bot = context.bot
     if user_id not in user_portfolios:
         update.message.reply_text(
             "Завреши регистрацию используя команду /start прежде чем знакомиться!"
         )
         return ConversationHandler.END
 
-    # Simulate searching for other users' profiles
+    answer = update.message.text
+    other_user_id = context.user_data.get('other_user_id')
+    if other_user_id is not None:
+        my_user_username = context.bot.get_chat_member(chat_id=update.message.chat_id,
+                                                       user_id=update.message.chat_id)["user"]["username"]
+        other_user_username = context.bot.get_chat_member(chat_id=other_user_id,
+                                                          user_id=other_user_id)["user"]["username"]
+
+        if other_user_id in user_portfolios[user_id]['likes_received']:
+            if answer == "❤️":
+                bot.send_message(user_id,
+                                 f"Вы с @{other_user_username} лайкнули профили друг друга. Приятного знакоства!")
+                del user_portfolios[user_id]['likes_received'][other_user_id]
+                user_portfolios[other_user_id]['likes_received'][user_id] = my_user_username
+            elif answer == "👎":
+                del user_portfolios[user_id]['likes_received'][other_user_id]
+                del user_portfolios[other_user_id]['likes_sent'][user_id]
+
+        else:
+            if answer == "❤️":
+                user_portfolios[user_id]["likes_sent"][other_user_id] = other_user_username
+                print(my_user_username, user_portfolios[user_id]["likes_sent"])
+
+                user_portfolios[other_user_id]["likes_received"][user_id] = my_user_username
 
     search_results = context.user_data.get("search_results")
 
@@ -153,11 +176,28 @@ def search(update: Update, context: CallbackContext) -> int:
     if viewed_profiles is None:
         viewed_profiles = []
 
+    likes_sent_and_received = []
+    likes_received = []
+
     for other_user_id, user_data_ in user_portfolios.items():
-        if other_user_id != user_id and other_user_id not in search_results and other_user_id not in viewed_profiles:
+
+        if other_user_id in user_portfolios[user_id]['likes_received'] and other_user_id in \
+                user_portfolios[user_id]['likes_sent']:
+            if other_user_id in search_results:
+                search_results.remove(other_user_id)
+            likes_sent_and_received.append(other_user_id)
+
+        elif other_user_id in user_portfolios[user_id]['likes_received']:
+            if other_user_id in search_results:
+                search_results.remove(other_user_id)
+            likes_received.append(other_user_id)
+
+        elif other_user_id != user_id and other_user_id not in search_results and other_user_id not in viewed_profiles:
             search_results.append(other_user_id)
-    context.user_data['search_results'] = search_results
+
+    context.user_data['search_results'] = likes_sent_and_received + likes_received + search_results
     context.user_data['viewed_profiles'] = viewed_profiles
+
     send_profiles(update, context)
 
 
@@ -168,64 +208,56 @@ def send_profiles(update: Update, context: CallbackContext) -> int:
     bot = context.bot
 
     if not search_results:
-        bot.send_message(chat_id, "Пока что вы просмотрели все профили, возвращайтесь через время и мы найдем вам "
-                                  "кого-то еще! /search")
+        bot.send_message(chat_id, "Пока что вы просмотрели все профили, возвращайтесь через время и мы найдем тебе "
+                                  "кого-то еще! А возможно тебя кто-то лайкнул, используй /search чтобы вернуться!")
 
         return ConversationHandler.END
 
-    try:
-        other_user_id = search_results[0]
-        user_data_ = user_portfolios[other_user_id]
-        user_name = user_data_["name"]
-        user_age = user_data_["age"]
-        user_school = user_data_["school"]
-        user_program = user_data_["program"]
-        user_photo = user_data_["photo"]
-        context.user_data['other_user_id'] = other_user_id
-        message_text = f"{user_name}, {user_age}\n{user_school}: {user_program}"
-        reply_markup = ReplyKeyboardMarkup([['❤️', '👎']], one_time_keyboard=True)
-        bot.send_photo(chat_id=chat_id, photo=open(user_photo, 'rb'), caption=message_text,
-                       reply_markup=reply_markup)
-        return handle_waiting_for_answer(update, context)
+    other_user_id = search_results[0]
+    user_data_ = user_portfolios[other_user_id]
+    user_name = user_data_["name"]
+    user_age = user_data_["age"]
+    user_school = user_data_["school"]
+    user_program = user_data_["program"]
+    user_photo = user_data_["photo"]
+    context.user_data['other_user_id'] = other_user_id
 
-    except IndexError:
-        bot.send_message(chat_id, "Пока что вы просмотрели все профили, возвращайтесь через время и мы найдем вам "
-                                  "кого-то еще! /search")
-        return ConversationHandler.END
+    if other_user_id in user_portfolios[chat_id]["likes_received"] and other_user_id in user_portfolios[chat_id][
+        "likes_sent"]:
+        print("hueta")
+        message_text = f"{user_name}, {user_age}\n{user_school}: {user_program}\n\n@{user_portfolios[chat_id]['likes_sent'][other_user_id]} лайкнул ваш профиль в ответ!"
+        bot.send_photo(chat_id=chat_id, photo=open(user_photo, 'rb'), caption=message_text)
 
+        del user_portfolios[chat_id]["likes_received"][other_user_id]
+        del user_portfolios[chat_id]["likes_sent"][other_user_id]
+        del user_portfolios[other_user_id]["likes_sent"][chat_id]
 
-def send_profile_back(chat_id, profile, text, bot):
-    user_name = profile["name"]
-    user_age = profile["age"]
-    user_school = profile["school"]
-    user_program = profile["program"]
+        return search(update, context)
 
     message_text = f"{user_name}, {user_age}\n{user_school}: {user_program}"
+
+    if other_user_id in user_portfolios[chat_id]["likes_received"]:
+        message_text = f"Этому пользователю понравилась ваша анкета. Лайкни в ответ чтобы познакомиться!\n\n{user_name}, {user_age}\n{user_school}: {user_program}"
+
     reply_markup = ReplyKeyboardMarkup([['❤️', '👎']], one_time_keyboard=True)
-    bot.send_photo(chat_id=chat_id, photo=open(profile["photo"], 'rb'), caption=text + "\n" + message_text,
+    bot.send_photo(chat_id=chat_id, photo=open(user_photo, 'rb'), caption=message_text,
                    reply_markup=reply_markup)
+
+    return handle_waiting_for_answer(update, context)
 
 
 def handle_waiting_for_answer(update: Update, context: CallbackContext) -> int:
-    print('nigger')
-    # Handle the user's answer as needed
-    answer = update.message.text
     other_user_id = context.user_data.get('other_user_id')
 
     search_results = context.user_data.get('search_results', [])
-    print(context.user_data.get('search_results', []))
     search_results.remove(other_user_id)
+
     context.user_data["search_results"] = search_results
-    print(context.user_data.get('search_results', []))
 
     viewed_profiles = context.user_data.get('viewed_profiles', [])
     viewed_profiles.append(other_user_id)
     context.user_data['viewed_profiles'] = viewed_profiles
-    # if answer == "❤️": chat_member = context.bot.get_chat_member(chat_id=update.message.chat_id,
-    # user_id=update.message.chat_id) send_profile_back(other_user_id, user_portfolios[update.message.chat_id],
-    # f"{chat_member} лайкнул ваш профиль") print(f"{update.message.chat_id} liked {other_user_id}")
 
-    # Transition back to the SEND_PROFILES state
     return SEARCH
 
 
