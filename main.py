@@ -230,7 +230,6 @@ def send_profiles(update: Update, context: CallbackContext) -> int:
 
         del user_portfolios[chat_id]["likes_received"][other_user_id]
         del user_portfolios[chat_id]["likes_sent"][other_user_id]
-        del user_portfolios[other_user_id]["likes_sent"][chat_id]
 
         return search(update, context)
 
