@@ -11,7 +11,10 @@ bot = telebot.TeleBot('6373983672:AAFJPyO1sR_nAm0ae3A4qeR-vhWExuRk7i8')
 def check_user_exists(user_id):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
-    cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    try:
+        cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    except sqlite3.OperationalError:
+        return False
     user = cur.fetchall()
     print(user)
     conn.commit()
@@ -132,8 +135,8 @@ def set_school(user_id, school):
 def set_photo(user_id, photo):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
-    cur.execute('UPDATE users SET photo = ?, likes_sent = " ", likes_received = " " WHERE user_id = ?',
-                (photo, user_id,))
+    cur.execute('UPDATE users SET photo = ?, likes_sent = " ", likes_received = " ", seen_friends = " " '
+                'WHERE user_id = ?', (photo, user_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -323,14 +326,25 @@ def get_like_received(user_id):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
-    user_id = cur.fetchall()
+    likes_received = cur.fetchall()
     conn.commit()
     cur.close()
     conn.close()
     try:
-        return int(user_id[0][0].lstrip().split(", ")[0])
+        return int(likes_received[0][0].lstrip().split(", ")[0])
     except ValueError:
         return -1
+
+
+def get_likes_received(user_id):
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
+    likes_received = cur.fetchall()[0][0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return likes_received
 
 
 def looking_for_fits(uid, found_id):
@@ -364,6 +378,45 @@ def like_happened(uid, found_id):
     conn.close()
 
 
+def set_seen_friends(user_id, found_id):
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT seen_friends FROM users WHERE user_id = ?', (user_id,))
+    seen_friends = cur.fetchall()[0][0]
+    if f" {found_id}, " not in seen_friends:
+        seen_friends += f"{found_id}, "
+        cur.execute('UPDATE users SET seen_friends = ? WHERE user_id = ?', (seen_friends, user_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def clear_seen_friends(user_id):
+    likes_received = get_likes_received(user_id)
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('UPDATE users SET seen_friends = ? WHERE user_id = ?', (likes_received, user_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def is_in_seen_friends(user_id, found_id):
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT seen_friends FROM users WHERE user_id = ?', (user_id,))
+    seen_friends = cur.fetchall()[0][0]
+    if f" {found_id}, " not in seen_friends:
+        conn.commit()
+        cur.close()
+        conn.close()
+        return False
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
@@ -372,7 +425,8 @@ def start(message):
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int unique, '
                 'name varchar(50), age int, gender varchar(10), school varchar(7), photo varchar(200), likes_sent '
-                'varchar(30000), likes_received varchar(30000), looking_for int, found_id int)')
+                'varchar(30000), likes_received varchar(30000), looking_for int, found_id int, seen_friends '
+                'varchar(30000))')
 
     conn.commit()
     cur.close()
@@ -571,6 +625,8 @@ def search(message):
 
 
 def handle_search_options(message):
+    user_id = message.chat.id
+
     if message.text == "/search":
         return search(message)
     if message.text == '/start':
@@ -583,6 +639,7 @@ def handle_search_options(message):
         return cancel(message)
 
     if message.text == "Ищу друзей🫂":
+        clear_seen_friends(user_id)
         looking_for = 1
     elif message.text == "Ищу напарника в проект🧠":
         looking_for = 2
@@ -590,7 +647,6 @@ def handle_search_options(message):
         looking_for = 3
     else:
         return search(message)
-    user_id = message.chat.id
     set_looking_for(user_id, looking_for)
     return send_profile_first(message)
 
@@ -619,23 +675,29 @@ def send_profile_first(message):
     response_markup.row(btn1, btn2)
     number_of_users = get_amount_of_users()
     found_id = uid
-    counter = 0
-    while not looking_for_fits(uid, found_id):
-        found_id = random.randint(1, number_of_users)
-        if counter == 20:
-            break
-        counter += 1
+    possible = True
+    users_uids = list(range(1, number_of_users + 1))
 
-    if counter != 20:
-        set_found_id(user_id, found_id)
-        found_user_id = get_user_id(found_id)
-        bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
-                       caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
-                       reply_markup=response_markup)
-        bot.register_next_step_handler(message, send_profile_second)
-    else:
-        bot.send_message(user_id, "Пока что не можем найти тебе анкеты. Возвращайся попозже, используя /search")
+    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id):
+        if len(users_uids) == 1:
+            possible = False
+            break
+        users_uids.remove(found_id)
+        index = random.randint(0, len(users_uids) - 1)
+        found_id = users_uids[index]
+
+    if not possible:
+        bot.send_message(user_id, "Просмотрены все существующие профили на данный момент. Используй /search чтобы "
+                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
         return
+
+    set_seen_friends(user_id, found_id)
+    set_found_id(user_id, found_id)
+    found_user_id = get_user_id(found_id)
+    bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
+                   caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
+                   reply_markup=response_markup)
+    bot.register_next_step_handler(message, send_profile_second)
 
 
 def send_profile_second(message):
@@ -662,23 +724,29 @@ def send_profile_second(message):
     response_markup.row(btn1, btn2)
     number_of_users = get_amount_of_users()
     found_id = uid
-    counter = 0
-    while not looking_for_fits(uid, found_id):
-        found_id = random.randint(1, number_of_users)
-        if counter == 20:
-            break
-        counter += 1
+    possible = True
+    users_uids = list(range(1, number_of_users))
 
-    if counter != 20:
-        set_found_id(user_id, found_id)
-        found_user_id = get_user_id(found_id)
-        bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
-                       caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
-                       reply_markup=response_markup)
-        bot.register_next_step_handler(message, send_profile_second)
-    else:
-        bot.send_message(user_id, "Пока что не можем найти тебе анкеты. Возвращайся попозже, используя /search")
+    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id):
+        if len(users_uids) == 1:
+            possible = False
+            break
+        users_uids.remove(found_id)
+        index = random.randint(0, len(users_uids) - 1)
+        found_id = users_uids[index]
+
+    if not possible:
+        bot.send_message(user_id, "Просмотрены все существующие профили на данный момент. Используй /search чтобы "
+                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
         return
+
+    set_seen_friends(user_id, found_id)
+    set_found_id(user_id, found_id)
+    found_user_id = get_user_id(found_id)
+    bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
+                   caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
+                   reply_markup=response_markup)
+    bot.register_next_step_handler(message, send_profile_second)
 
 
 @bot.message_handler(commands=['profile'])
