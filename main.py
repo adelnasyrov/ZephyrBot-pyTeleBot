@@ -561,21 +561,38 @@ def search(message):
     if not check_user_exists(user_id):
         bot.send_message(message.chat.id, "Сначала создай профиль с помощью /start")
     else:
-        search_markup = types.InlineKeyboardMarkup(row_width=1)
-        btn1 = types.InlineKeyboardButton('Ищу друзей🫂', callback_data=f"1 {user_id}")
-        btn2 = types.InlineKeyboardButton('Ищу напарника в проект🧠', callback_data=f"2 {user_id}")
-        btn3 = types.InlineKeyboardButton('Ищу мероприятия🥳', callback_data=f"3 {user_id}")
+        search_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        btn1 = types.KeyboardButton('Ищу друзей🫂')
+        btn2 = types.KeyboardButton('Ищу напарника в проект🧠')
+        btn3 = types.KeyboardButton('Ищу мероприятия🥳')
         search_markup.add(btn1, btn2, btn3)
         bot.send_message(message.chat.id, "Что ты хочешь найти сегодня?", reply_markup=search_markup)
+        bot.register_next_step_handler(message, handle_search_options)
 
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback(call):
-    callback_data = call.data.split(' ')
-    looking_for = int(callback_data[0])
-    user_id = int(callback_data[1])
+def handle_search_options(message):
+    if message.text == "/search":
+        return search(message)
+    if message.text == '/start':
+        return start(message)
+    if message.text == '/profile':
+        return profile(message)
+    if message.text == '/likes':
+        return likes(message)
+    if message.text == '/cancel':
+        return cancel(message)
+
+    if message.text == "Ищу друзей🫂":
+        looking_for = 1
+    elif message.text == "Ищу напарника в проект🧠":
+        looking_for = 2
+    elif message.text == "Ищу мероприятия🥳":
+        looking_for = 3
+    else:
+        return search(message)
+    user_id = message.chat.id
     set_looking_for(user_id, looking_for)
-    return send_profile_first(call.message)
+    return send_profile_first(message)
 
 
 def send_profile_first(message):
@@ -596,7 +613,7 @@ def send_profile_first(message):
     if message.text == "❤️":
         like_happened(uid, found_id)
 
-    response_markup = types.ReplyKeyboardMarkup()
+    response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
     response_markup.row(btn1, btn2)
@@ -639,7 +656,7 @@ def send_profile_second(message):
     if message.text == "❤️":
         like_happened(uid, found_id)
 
-    response_markup = types.ReplyKeyboardMarkup()
+    response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
     response_markup.row(btn1, btn2)
@@ -795,7 +812,7 @@ def likes(message):
     user_id = message.chat.id
     like_received_id = get_like_received(user_id)
     if like_received_id == -1:
-        bot.send_message(user_id, "Никто не лайкнул ваш профиль😰, возвращайтесь позже")
+        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
         return
     return send_like_first(message)
 
@@ -815,7 +832,7 @@ def send_like_first(message):
 
     like_received_id = get_like_received(user_id)
     if like_received_id == -1:
-        bot.send_message(user_id, "Никто не лайкнул ваш профиль😰, возвращайтесь позже")
+        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
         return
     like_received_user_id = get_user_id(like_received_id)
     like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
@@ -829,7 +846,7 @@ def send_like_first(message):
         return send_like_first(message)
 
     else:
-        response_markup = types.ReplyKeyboardMarkup()
+        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
         response_markup.row(btn1, btn2)
@@ -864,8 +881,8 @@ def send_like_second(message):
     delete_first_like_received(user_id, like_received_id)
 
     like_received_id = get_like_received(user_id)
-    if like_received_id == "-1":
-        bot.send_message(user_id, "Никто не лайкнул ваш профиль😰, возвращайтесь позже")
+    if like_received_id == -1:
+        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
         return
     like_received_user_id = get_user_id(like_received_id)
     like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
@@ -882,7 +899,7 @@ def send_like_second(message):
         return send_like_first(message)
 
     else:
-        response_markup = types.ReplyKeyboardMarkup()
+        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
         response_markup.row(btn1, btn2)
