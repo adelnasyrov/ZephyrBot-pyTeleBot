@@ -670,6 +670,11 @@ def send_profile_first(message):
 
     if message.text == "❤️":
         like_happened(uid, found_id)
+        set_seen_friends(user_id, found_id)
+
+    elif (message.text != "Ищу друзей🫂" and message.text != "Ищу напарника в проект🧠"
+          and message.text != "Ищу мероприятия🥳"):
+        set_seen_friends(user_id, found_id)
 
     response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
@@ -693,7 +698,6 @@ def send_profile_first(message):
                                   "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
         return
 
-    set_seen_friends(user_id, found_id)
     set_found_id(user_id, found_id)
     found_user_id = get_user_id(found_id)
     bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
@@ -716,6 +720,8 @@ def send_profile_second(message):
     user_id = message.chat.id
     found_id = get_found_id(user_id)
     uid = get_id(user_id)
+
+    set_seen_friends(user_id, found_id)
 
     if message.text == "❤️":
         like_happened(uid, found_id)
@@ -742,7 +748,6 @@ def send_profile_second(message):
                                   "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
         return
 
-    set_seen_friends(user_id, found_id)
     set_found_id(user_id, found_id)
     found_user_id = get_user_id(found_id)
     bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
