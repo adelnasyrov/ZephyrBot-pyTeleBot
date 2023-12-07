@@ -619,7 +619,9 @@ def search(message):
         btn1 = types.KeyboardButton('Ищу друзей🫂')
         btn2 = types.KeyboardButton('Ищу напарника в проект🧠')
         btn3 = types.KeyboardButton('Ищу мероприятия🥳')
-        search_markup.add(btn1, btn2, btn3)
+        search_markup.row(btn1)
+        search_markup.row(btn2)
+        search_markup.row(btn3)
         bot.send_message(message.chat.id, "Что ты хочешь найти сегодня?", reply_markup=search_markup)
         bot.register_next_step_handler(message, handle_search_options)
 
