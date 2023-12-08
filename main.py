@@ -198,6 +198,7 @@ def get_photo(user_id):
     conn.commit()
     cur.close()
     conn.close()
+    print(photo[0][0])
     return photo[0][0]
 
 
@@ -311,6 +312,20 @@ def get_id(user_id):
     return uid[0][0]
 
 
+def get_user_uids():
+    user_uids = []
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM users')
+    uids = cur.fetchall()
+    for el in uids:
+        user_uids.append(el[0])
+    conn.commit()
+    cur.close()
+    conn.close()
+    return user_uids
+
+
 def get_user_id(uid):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
@@ -319,7 +334,11 @@ def get_user_id(uid):
     conn.commit()
     cur.close()
     conn.close()
-    return user_id[0][0]
+    print(uid)
+    try:
+        return user_id[0][0]
+    except IndexError:
+        return -1
 
 
 def get_like_received(user_id):
@@ -481,7 +500,7 @@ def ask_gender(message):
     if message.text.lower() == '/start':
         return start(message)
 
-    gender_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    gender_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('Парень 👨')
     btn2 = types.KeyboardButton('Девушка 👩')
     gender_markup.row(btn1, btn2)
@@ -513,7 +532,7 @@ def ask_school(message):
     if message.text.lower() == '/start':
         return start(message)
 
-    school_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    school_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('ИПАМ')
     btn2 = types.KeyboardButton('ВШКМиС')
     btn3 = types.KeyboardButton('ВШФ')
@@ -615,7 +634,7 @@ def search(message):
     if not check_user_exists(user_id):
         bot.send_message(message.chat.id, "Сначала создай профиль с помощью /start")
     else:
-        search_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        search_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Ищу друзей🫂')
         btn2 = types.KeyboardButton('Ищу напарника в проект🧠')
         btn3 = types.KeyboardButton('Ищу мероприятия🥳')
@@ -641,11 +660,14 @@ def handle_search_options(message):
         return cancel(message)
 
     if message.text == "Ищу друзей🫂":
+        bot.send_message(user_id, "Тебе будут предложены анкеты тех, кто тоже ищет друзей!")
         clear_seen_friends(user_id)
         looking_for = 1
     elif message.text == "Ищу напарника в проект🧠":
+        bot.send_message(user_id, "Тебе будут предложены анкеты тех, кто тоже ищет напарников в проект!")
         looking_for = 2
     elif message.text == "Ищу мероприятия🥳":
+        bot.send_message(user_id, "Тебе будут предложены анкеты тех, кто тоже ищет мероприятия!")
         looking_for = 3
     else:
         return search(message)
@@ -676,30 +698,36 @@ def send_profile_first(message):
           and message.text != "Ищу мероприятия🥳"):
         set_seen_friends(user_id, found_id)
 
-    response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
     response_markup.row(btn1, btn2)
-    number_of_users = get_amount_of_users()
     found_id = uid
+    found_user_id = user_id
     possible = True
-    users_uids = list(range(1, number_of_users + 1))
+    users_uids = get_user_uids()
 
-    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id):
+    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id) or not check_user_exists(
+            found_user_id):
         if len(users_uids) == 1:
             possible = False
             break
         users_uids.remove(found_id)
         index = random.randint(0, len(users_uids) - 1)
         found_id = users_uids[index]
+        found_user_id = get_user_id(found_id)
 
     if not possible:
+        reply_markup = types.ReplyKeyboardRemove()
         bot.send_message(user_id, "Просмотрены все существующие профили на данный момент. Используй /search чтобы "
-                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
+                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!",
+                         reply_markup=reply_markup)
         return
 
     set_found_id(user_id, found_id)
     found_user_id = get_user_id(found_id)
+    print(found_id, found_user_id)
+
     bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
                    caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
                    reply_markup=response_markup)
@@ -726,30 +754,35 @@ def send_profile_second(message):
     if message.text == "❤️":
         like_happened(uid, found_id)
 
-    response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
     response_markup.row(btn1, btn2)
-    number_of_users = get_amount_of_users()
     found_id = uid
+    found_user_id = user_id
     possible = True
-    users_uids = list(range(1, number_of_users))
+    users_uids = get_user_uids()
 
-    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id):
+    while (not looking_for_fits(uid, found_id)) or is_in_seen_friends(user_id, found_id) or not check_user_exists(
+            found_user_id):
         if len(users_uids) == 1:
             possible = False
             break
         users_uids.remove(found_id)
         index = random.randint(0, len(users_uids) - 1)
         found_id = users_uids[index]
+        found_user_id = get_user_id(found_id)
 
     if not possible:
+        reply_markup = types.ReplyKeyboardRemove()
         bot.send_message(user_id, "Просмотрены все существующие профили на данный момент. Используй /search чтобы "
-                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!")
+                                  "посмотреть новые профили или /likes чтобы посмотреть кто тебя лайкнул!",
+                         reply_markup=reply_markup)
         return
 
     set_found_id(user_id, found_id)
     found_user_id = get_user_id(found_id)
+    print(found_id, found_user_id)
     bot.send_photo(user_id, photo=open(get_photo(found_user_id), 'rb'),
                    caption=f"{get_name(found_user_id)}, {get_age(found_user_id)}\n{get_school(found_user_id)}",
                    reply_markup=response_markup)
@@ -763,7 +796,7 @@ def profile(message):
         bot.send_message(user_id, "Сначала создай профиль с помощью /start")
         return
     bot.send_message(user_id, "Вот ваш профиль:")
-    profile_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    profile_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('Изменить фото')
     btn2 = types.KeyboardButton('Изменить имя')
     btn3 = types.KeyboardButton('Изменить возраст')
@@ -887,7 +920,8 @@ def likes(message):
     user_id = message.chat.id
     like_received_id = get_like_received(user_id)
     if like_received_id == -1:
-        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
+        reply_markup = types.ReplyKeyboardRemove()
+        bot.send_message(user_id, "Больше лайков нет😰, возвращайся позже", reply_markup=reply_markup)
         return
     return send_like_first(message)
 
@@ -907,9 +941,11 @@ def send_like_first(message):
 
     like_received_id = get_like_received(user_id)
     if like_received_id == -1:
-        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
+        reply_markup = types.ReplyKeyboardRemove()
+        bot.send_message(user_id, "Больше лайков нет😰, возвращайся позже", reply_markup=reply_markup)
         return
     like_received_user_id = get_user_id(like_received_id)
+    print(like_received_user_id)
     like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
 
     if user_in_likes_sent(uid, like_received_id):
@@ -921,13 +957,13 @@ def send_like_first(message):
         return send_like_first(message)
 
     else:
-        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
         response_markup.row(btn1, btn2)
         bot.send_photo(user_id, photo=open(get_photo_by_id(like_received_id), "rb"),
                        caption=f"{get_name_by_id(like_received_id)}, {get_age_by_id(like_received_id)}\n"
-                               f"{get_school_by_id(like_received_id)}\n\nЭтот пользователь лайкнул ваш про"
+                               f"{get_school_by_id(like_received_id)}\n\nЭтот пользователь лайкнул твой про"
                                f"филь. Лайкни в ответ чтобы познакомиться",
                        reply_markup=response_markup)
         bot.register_next_step_handler(message, send_like_second)
@@ -957,7 +993,8 @@ def send_like_second(message):
 
     like_received_id = get_like_received(user_id)
     if like_received_id == -1:
-        bot.send_message(user_id, "Пока что лайков нету😰, возвращайтесь позже")
+        reply_markup = types.ReplyKeyboardRemove()
+        bot.send_message(user_id, "Больше лайков нет😰, возвращайся позже", reply_markup=reply_markup)
         return
     like_received_user_id = get_user_id(like_received_id)
     like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
@@ -974,7 +1011,7 @@ def send_like_second(message):
         return send_like_first(message)
 
     else:
-        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
         response_markup.row(btn1, btn2)
@@ -988,6 +1025,13 @@ def send_like_second(message):
 @bot.message_handler(commands=['cancel'])
 def cancel(message):
     bot.send_message(message.chat.id, "Все действия отменены. Возвращайся, используя /search")
+    return
+
+
+@bot.message_handler(commands=['stats'])
+def stats(message):
+    count = get_amount_of_users()
+    bot.send_message(message.chat.id, f"Кол-во пользователей: {count}")
     return
 
 
