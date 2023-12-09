@@ -312,6 +312,20 @@ def get_id(user_id):
     return uid[0][0]
 
 
+def get_user_ids():
+    user_ids = []
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT user_id FROM users')
+    ids = cur.fetchall()
+    for el in ids:
+        user_ids.append(el[0])
+    conn.commit()
+    cur.close()
+    conn.close()
+    return user_ids
+
+
 def get_user_uids():
     user_uids = []
     conn = sqlite3.connect('reu_zephyr.sql')
@@ -1032,6 +1046,21 @@ def cancel(message):
 def stats(message):
     count = get_amount_of_users()
     bot.send_message(message.chat.id, f"Кол-во пользователей: {count}")
+    return
+
+
+@bot.message_handler(commands=['warning'])
+def warning(message):
+    if message.chat.id == 524931933:
+        user_ids = get_user_ids()
+        for user_id in user_ids:
+            try:
+                bot.send_message(user_id, "‼️Внимание‼️\n\nЕсли в твоем профиле содержится информация не "
+                                          "соответствующая действительности, в том числе фотография профиля, "
+                                          "ваш профиль может быть удален в следующие 24 часа. "
+                                          "Изменить профиль - /profile")
+            except telebot.apihelper.ApiTelegramException:
+                pass
     return
 
 
