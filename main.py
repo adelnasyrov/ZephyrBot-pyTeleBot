@@ -27,6 +27,25 @@ def check_user_exists(user_id):
     return True
 
 
+def check_user_exists_by_uid(uid):
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    try:
+        cur.execute('SELECT * FROM users WHERE id = ?', (uid,))
+    except sqlite3.OperationalError:
+        return False
+    user = cur.fetchall()
+    print(user)
+    conn.commit()
+    cur.close()
+    conn.close()
+    if len(user) == 0:
+        return False
+    if user[0][6] is None:
+        return False
+    return True
+
+
 def check_name_exists(user_id):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
@@ -340,6 +359,21 @@ def get_user_uids():
     return user_uids
 
 
+def get_amount_of_likes_received(user_id):
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
+    try:
+        likes_received = cur.fetchall()[0][0]
+        amount_of_likes_received = likes_received.count(",")
+        conn.commit()
+        cur.close()
+        conn.close()
+        return amount_of_likes_received
+    except TypeError:
+        return 0
+
+
 def get_user_id(uid):
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
@@ -364,7 +398,15 @@ def get_like_received(user_id):
     cur.close()
     conn.close()
     try:
-        return int(likes_received[0][0].lstrip().split(", ")[0])
+        index = 0
+        found_uid = int(likes_received[0][0].lstrip().split(", ")[index])
+
+        while not check_user_exists_by_uid(found_uid):
+            delete_first_like_received(user_id, found_uid)
+            index += 1
+            found_uid = int(likes_received[0][0].lstrip().split(", ")[index])
+
+        return int(likes_received[0][0].lstrip().split(", ")[index])
     except ValueError:
         return -1
 
@@ -596,6 +638,9 @@ def ask_photo(message):
         bot.send_message(message.chat.id,
                          "Теперь отправь свою фотографию, но имей ввиду, другие пользователи смогут ее видеть!")
         bot.register_next_step_handler(message, finish_registration)
+    elif check_school_exists(user_id):
+        bot.send_message(message.chat.id, "Отправь фотографию🫵")
+        bot.register_next_step_handler(message, finish_registration)
     else:
         return ask_school(message)
 
@@ -613,7 +658,7 @@ def finish_registration(message):
         if message.text == '/cancel':
             return cancel(message)
         else:
-            bot.send_message(message.chat.id, "Отправь фотографию🫵")
+            return ask_photo(message)
     user_id = message.chat.id
     # Get the photo file_id
     if check_school_exists(user_id) and not check_user_exists(user_id):
@@ -672,6 +717,8 @@ def handle_search_options(message):
         return likes(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
 
     if message.text == "Ищу друзей🫂":
         bot.send_message(user_id, "Тебе будут предложены анкеты тех, кто тоже ищет друзей!")
@@ -700,6 +747,8 @@ def send_profile_first(message):
         return likes(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
     user_id = message.chat.id
     found_id = get_found_id(user_id)
     uid = get_id(user_id)
@@ -759,6 +808,8 @@ def send_profile_second(message):
         return likes(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
     user_id = message.chat.id
     found_id = get_found_id(user_id)
     uid = get_id(user_id)
@@ -835,6 +886,8 @@ def handle_profile_change(message):
         return likes(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
     elif message.text == "Изменить фото":
         bot.send_message(message.chat.id, "Отправь новое фото, но имей ввиду, другие пользовтаели смогут его видеть!")
         bot.register_next_step_handler(message, change_photo)
@@ -884,6 +937,10 @@ def change_photo(message):
             photo_file.write(downloaded_photo)
         photo = photo_filename
 
+        if not os.path.exists(photo):
+            bot.send_message(user_id, "Не удалось изменить фото профиля, попробуйте позже!")
+            return
+
         os.remove(get_photo(user_id))
         set_photo(user_id, photo)
         bot.send_message(user_id, "Фото успешно изменено!")
@@ -918,6 +975,8 @@ def change_age(message):
         return likes(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
     else:
         try:
             age = int(message.text)
@@ -949,6 +1008,8 @@ def send_like_first(message):
         return profile(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
 
     user_id = message.chat.id
     uid = get_id(user_id)
@@ -992,6 +1053,8 @@ def send_like_second(message):
         return profile(message)
     if message.text == '/cancel':
         return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
 
     user_id = message.chat.id
     uid = get_id(user_id)
@@ -1038,7 +1101,9 @@ def send_like_second(message):
 
 @bot.message_handler(commands=['cancel'])
 def cancel(message):
-    bot.send_message(message.chat.id, "Все действия отменены. Возвращайся, используя /search")
+    reply_markup = types.ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, "Все действия отменены. Возвращайся, используя /search",
+                     reply_markup=reply_markup)
     return
 
 
@@ -1062,6 +1127,54 @@ def warning(message):
             except telebot.apihelper.ApiTelegramException:
                 pass
     return
+
+
+@bot.message_handler(commands=['show_likes'])
+def show_likes(message):
+    if message.chat.id == 524931933:
+        user_ids = get_user_ids()
+        for user_id in user_ids:
+            amount_of_likes_received = get_amount_of_likes_received(user_id)
+            if amount_of_likes_received is not None and amount_of_likes_received != 0:
+                try:
+                    bot.send_message(user_id, f"😱У тебя есть непросмотренные лайки: {amount_of_likes_received}."
+                                              f" Введи /likes чтобы посмотреть")
+                except telebot.apihelper.ApiTelegramException:
+                    pass
+    return
+
+
+@bot.message_handler(commands=['delete'])
+def delete(message):
+    reply_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
+    btn1 = types.KeyboardButton('Да')
+    btn2 = types.KeyboardButton('Нет')
+    reply_markup.row(btn1, btn2)
+    bot.send_message(message.chat.id, "Ты уверен что хочешь удалить свой профиль?", reply_markup=reply_markup)
+    bot.register_next_step_handler(message, response_to_delete)
+
+
+def response_to_delete(message):
+    if message.text == "/search":
+        return search(message)
+    if message.text == '/start':
+        return start(message)
+    if message.text == '/profile':
+        return profile(message)
+    if message.text == '/cancel':
+        return cancel(message)
+    if message.text == '/likes':
+        return likes(message)
+    if message.text == '/delete':
+        return delete(message)
+    if message.text == "Да":
+        delete_user(message.chat.id)
+        bot.send_message(message.chat.id, "Ты всегда можешь вернуться при помощи /start. Удачи🤡")
+        return
+
+    else:
+        bot.send_message(message.chat.id, "Правильно, возвращайся к поиску! /search")
+        return
 
 
 bot.infinity_polling()
