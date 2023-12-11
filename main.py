@@ -1177,4 +1177,17 @@ def response_to_delete(message):
         return
 
 
+@bot.message_handler(commands=['entertain'])
+def entertain(message):
+    if message.chat.id == 524931933:
+        user_ids = get_user_ids()
+        for user_id in user_ids:
+            if not check_user_exists(user_id):
+                try:
+                    bot.send_message(user_id, "Более 200 студентов РЭУ уже ждут тебя! Присоединйся используя /start")
+                except telebot.apihelper.ApiTelegramException:
+                    pass
+    return
+
+
 bot.infinity_polling()
