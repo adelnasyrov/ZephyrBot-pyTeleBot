@@ -360,18 +360,17 @@ def get_user_uids():
 
 
 def get_amount_of_likes_received(user_id):
+    if not check_user_exists(user_id):
+        return 0
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
-    try:
-        likes_received = cur.fetchall()[0][0]
-        amount_of_likes_received = likes_received.count(",")
-        conn.commit()
-        cur.close()
-        conn.close()
-        return amount_of_likes_received
-    except TypeError:
-        return 0
+    likes_received = cur.fetchall()[0][0]
+    amount_of_likes_received = likes_received.count(",")
+    conn.commit()
+    cur.close()
+    conn.close()
+    return amount_of_likes_received
 
 
 def get_user_id(uid):
@@ -390,6 +389,8 @@ def get_user_id(uid):
 
 
 def get_like_received(user_id):
+    if not check_user_exists(user_id):
+        return -1
     conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
@@ -756,6 +757,8 @@ def send_profile_first(message):
     if message.text == "❤️":
         like_happened(uid, found_id)
         set_seen_friends(user_id, found_id)
+        found_user_id = get_user_id(found_id)
+        bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
 
     elif (message.text != "Ищу друзей🫂" and message.text != "Ищу напарника в проект🧠"
           and message.text != "Ищу мероприятия🥳"):
@@ -818,6 +821,8 @@ def send_profile_second(message):
 
     if message.text == "❤️":
         like_happened(uid, found_id)
+        found_user_id = get_user_id(found_id)
+        bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
 
     response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
@@ -1021,7 +1026,11 @@ def send_like_first(message):
         return
     like_received_user_id = get_user_id(like_received_id)
     print(like_received_user_id)
-    like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
+    try:
+        like_received_username = "@" + str(
+            bot.get_chat_member(like_received_user_id, like_received_user_id).user.username)
+    except TypeError:
+        like_received_username = "@None"
 
     if user_in_likes_sent(uid, like_received_id):
         bot.send_message(user_id, f"Вы с пользователем {like_received_username} лайкнули друг друга👇")
@@ -1060,11 +1069,18 @@ def send_like_second(message):
     uid = get_id(user_id)
     like_received_id = get_like_received(user_id)
     like_received_user_id = get_user_id(like_received_id)
-    like_received_username = "@" + bot.get_chat_member(like_received_user_id, like_received_user_id).user.username
+    try:
+        like_received_username = "@" + str(
+            bot.get_chat_member(like_received_user_id, like_received_user_id).user.username)
+    except TypeError:
+        like_received_username = "@None"
 
     if message.text == '❤️':
         like_happened(uid, like_received_id)
         bot.send_message(user_id, f"👆Вы с пользователем {like_received_username} лайкнули друг друга")
+
+        like_received_user_id = get_user_id(like_received_id)
+        bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
 
     delete_first_like_received(user_id, like_received_id)
 
@@ -1135,6 +1151,7 @@ def show_likes(message):
         user_ids = get_user_ids()
         for user_id in user_ids:
             amount_of_likes_received = get_amount_of_likes_received(user_id)
+            bot.send_message(524931933, f"{user_id}: {amount_of_likes_received}")
             if amount_of_likes_received is not None and amount_of_likes_received != 0:
                 try:
                     bot.send_message(user_id, f"😱У тебя есть непросмотренные лайки: {amount_of_likes_received}."
@@ -1184,9 +1201,23 @@ def entertain(message):
         for user_id in user_ids:
             if not check_user_exists(user_id):
                 try:
-                    bot.send_message(user_id, "Более 200 студентов РЭУ уже ждут тебя! Присоединйся используя /start")
+                    bot.send_message(user_id, "Более 300 студентов РЭУ уже ждут тебя! Присоединйся используя /start")
                 except telebot.apihelper.ApiTelegramException:
                     pass
+    return
+
+
+@bot.message_handler(commands=['ask_support'])
+def ask_for_support(message):
+    if message.chat.id == 524931933:
+        user_ids = get_user_ids()
+        for user_id in user_ids:
+            try:
+                bot.send_message(user_id,
+                                 "Расскажи друзьям о боте, разошли его по группам, чтобы усилить наше студенческое "
+                                 "коммуникационное сообщество! 🌐🤝 \n\n#БотЗнакомствРЭУ")
+            except telebot.apihelper.ApiTelegramException:
+                pass
     return
 
 
