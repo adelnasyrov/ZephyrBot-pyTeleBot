@@ -758,7 +758,10 @@ def send_profile_first(message):
         like_happened(uid, found_id)
         set_seen_friends(user_id, found_id)
         found_user_id = get_user_id(found_id)
-        bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        try:
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        except telebot.apihelper.ApiTelegramException:
+            pass
 
     elif (message.text != "Ищу друзей🫂" and message.text != "Ищу напарника в проект🧠"
           and message.text != "Ищу мероприятия🥳"):
@@ -822,7 +825,10 @@ def send_profile_second(message):
     if message.text == "❤️":
         like_happened(uid, found_id)
         found_user_id = get_user_id(found_id)
-        bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        try:
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        except telebot.apihelper.ApiTelegramException:
+            pass
 
     response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
@@ -1080,7 +1086,10 @@ def send_like_second(message):
         bot.send_message(user_id, f"👆Вы с пользователем {like_received_username} лайкнули друг друга")
 
         like_received_user_id = get_user_id(like_received_id)
-        bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        try:
+            bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
+        except telebot.apihelper.ApiTelegramException:
+            pass
 
     delete_first_like_received(user_id, like_received_id)
 
