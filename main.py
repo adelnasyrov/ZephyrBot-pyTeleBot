@@ -1783,7 +1783,7 @@ def send_profile_first(message):
     possible = True
     users_uids = get_user_uids()
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id):
+    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
         if len(users_uids) == 1:
             possible = False
             break
@@ -1852,8 +1852,7 @@ def send_profile_second(message):
     possible = True
     users_uids = get_user_uids()
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(
-            found_user_id):
+    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
         if len(users_uids) == 1:
             possible = False
             break
