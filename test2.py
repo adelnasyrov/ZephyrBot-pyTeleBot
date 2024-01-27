@@ -6,31 +6,11 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 
-bot = telebot.TeleBot('6373983672:AAFJPyO1sR_nAm0ae3A4qeR-vhWExuRk7i8')
+bot = telebot.TeleBot('6802501298:AAEmXj8EVTjFaSsS1AqDbTZYB8vH7_T5FI0')
 checked_event_index = 0
-database = 'reu_zephyr.sql'
-university_name = 'РЭУ'
-university_name_english = 'REU'
-schools = ['ИПАМ', 'ВШКМиС', 'ВШФ', 'ВШСГН', 'ВИШ НМИТ', 'ВШЭИБ', 'ВШМ', 'ВШКИ', 'ВШП', 'Преподователь']
-ask_school_text = "С какой ты высшей школы?"
-
-
-def create_users_table():
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int unique, '
-                'name varchar(50), age int, gender varchar(10), school varchar(7), photo varchar(200), likes_sent '
-                'varchar(30000), likes_received varchar(30000), looking_for int, found_id int, seen_friends '
-                'varchar(30000), last_seen_event int DEFAULT -1, last_seen_idea int DEFAULT -2, '
-                'last_seen_question int DEFAULT -2)')
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
 
 def check_user_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     try:
         cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
@@ -48,7 +28,7 @@ def check_user_exists(user_id):
 
 
 def check_user_exists_by_uid(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     try:
         cur.execute('SELECT * FROM users WHERE id = ?', (uid,))
@@ -66,7 +46,7 @@ def check_user_exists_by_uid(uid):
 
 
 def check_name_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
     user = cur.fetchall()
@@ -80,7 +60,7 @@ def check_name_exists(user_id):
 
 
 def set_name(user_id, name):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET name = ? WHERE user_id = ?', (name, user_id,))
     conn.commit()
@@ -89,7 +69,7 @@ def set_name(user_id, name):
 
 
 def check_age_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
     user = cur.fetchall()
@@ -103,7 +83,7 @@ def check_age_exists(user_id):
 
 
 def set_age(user_id, age):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET age = ? WHERE user_id = ?', (age, user_id,))
     conn.commit()
@@ -112,7 +92,7 @@ def set_age(user_id, age):
 
 
 def check_gender_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
     user = cur.fetchall()
@@ -126,7 +106,7 @@ def check_gender_exists(user_id):
 
 
 def set_gender(user_id, gender):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET gender = ? WHERE user_id = ?', (gender, user_id,))
     conn.commit()
@@ -135,7 +115,7 @@ def set_gender(user_id, gender):
 
 
 def check_school_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
     user = cur.fetchall()
@@ -149,7 +129,7 @@ def check_school_exists(user_id):
 
 
 def user_in_likes_sent(uid, found_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_sent FROM users WHERE id = ?', (uid,))
     likes_sent = cur.fetchall()[0][0]
@@ -162,7 +142,7 @@ def user_in_likes_sent(uid, found_id):
 
 
 def set_school(user_id, school):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET school = ? WHERE user_id = ?', (school, user_id,))
     conn.commit()
@@ -171,7 +151,7 @@ def set_school(user_id, school):
 
 
 def set_photo(user_id, photo):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET photo = ?, likes_sent = " ", likes_received = " ", seen_friends = " " '
                 'WHERE user_id = ?', (photo, user_id,))
@@ -181,7 +161,7 @@ def set_photo(user_id, photo):
 
 
 def set_looking_for(user_id, looking_for):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET looking_for = ? WHERE user_id = ?', (looking_for, user_id,))
     conn.commit()
@@ -190,7 +170,7 @@ def set_looking_for(user_id, looking_for):
 
 
 def set_found_id(user_id, found_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET found_id = ? WHERE user_id = ?', (found_id, user_id,))
     conn.commit()
@@ -199,7 +179,7 @@ def set_found_id(user_id, found_id):
 
 
 def delete_user(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('DELETE FROM users WHERE user_id = ?', (user_id,))
     conn.commit()
@@ -208,7 +188,7 @@ def delete_user(user_id):
 
 
 def delete_first_like_received(user_id, like_received_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
     likes_received = cur.fetchall()[0][0]
@@ -220,7 +200,7 @@ def delete_first_like_received(user_id, like_received_id):
 
 
 def create_user(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('INSERT INTO users (user_id, looking_for) VALUES (?, 1)', (user_id,))
     conn.commit()
@@ -229,7 +209,7 @@ def create_user(user_id):
 
 
 def get_photo(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT photo FROM users WHERE user_id = ?', (user_id,))
     photo = cur.fetchall()
@@ -240,7 +220,7 @@ def get_photo(user_id):
 
 
 def get_name(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT name FROM users WHERE user_id = ?', (user_id,))
     name = cur.fetchall()
@@ -251,7 +231,7 @@ def get_name(user_id):
 
 
 def get_age(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT age FROM users WHERE user_id = ?', (user_id,))
     age = cur.fetchall()
@@ -262,7 +242,7 @@ def get_age(user_id):
 
 
 def get_school(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT school FROM users WHERE user_id = ?', (user_id,))
     school = cur.fetchall()
@@ -273,7 +253,7 @@ def get_school(user_id):
 
 
 def get_photo_by_id(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT photo FROM users WHERE id = ?', (uid,))
     photo = cur.fetchall()
@@ -284,7 +264,7 @@ def get_photo_by_id(uid):
 
 
 def get_name_by_id(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT name FROM users WHERE id = ?', (uid,))
     name = cur.fetchall()
@@ -295,7 +275,7 @@ def get_name_by_id(uid):
 
 
 def get_age_by_id(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT age FROM users WHERE id = ?', (uid,))
     age = cur.fetchall()
@@ -306,7 +286,7 @@ def get_age_by_id(uid):
 
 
 def get_school_by_id(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT school FROM users WHERE id = ?', (uid,))
     school = cur.fetchall()
@@ -317,7 +297,7 @@ def get_school_by_id(uid):
 
 
 def get_found_id(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT found_id FROM users WHERE user_id = ?', (user_id,))
     found_id = cur.fetchall()
@@ -328,7 +308,7 @@ def get_found_id(user_id):
 
 
 def get_amount_of_users():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT COUNT(*) AS user_count FROM users')
     result = cur.fetchone()
@@ -338,41 +318,8 @@ def get_amount_of_users():
     return result[0]
 
 
-def get_amount_of_active_users():
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute('SELECT COUNT(*) AS user_count FROM users WHERE photo IS NOT NULL')
-    result = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    return result[0]
-
-
-def get_amount_of_projects():
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute('SELECT COUNT(*) AS user_count FROM ideas WHERE idea_description IS NOT NULL')
-    result = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    return result[0]
-
-
-def get_amount_of_questions():
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute('SELECT COUNT(*) AS user_count FROM questions WHERE question IS NOT NULL')
-    result = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-    return result[0]
-
-
 def get_id(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT id FROM users WHERE user_id = ?', (user_id,))
     uid = cur.fetchall()
@@ -384,7 +331,7 @@ def get_id(user_id):
 
 def get_user_ids():
     user_ids = []
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT user_id FROM users')
     ids = cur.fetchall()
@@ -398,7 +345,7 @@ def get_user_ids():
 
 def get_user_uids():
     user_uids = []
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT id FROM users')
     uids = cur.fetchall()
@@ -413,7 +360,7 @@ def get_user_uids():
 def get_amount_of_likes_received(user_id):
     if not check_user_exists(user_id):
         return 0
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
     likes_received = cur.fetchall()[0][0]
@@ -425,7 +372,7 @@ def get_amount_of_likes_received(user_id):
 
 
 def get_user_id(uid):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT user_id FROM users WHERE id = ?', (uid,))
     user_id = cur.fetchall()
@@ -441,7 +388,7 @@ def get_user_id(uid):
 def get_like_received(user_id):
     if not check_user_exists(user_id):
         return -1
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
     likes_received = cur.fetchall()
@@ -463,7 +410,7 @@ def get_like_received(user_id):
 
 
 def get_likes_received(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_received FROM users WHERE user_id = ?', (user_id,))
     likes_received = cur.fetchall()[0][0]
@@ -474,7 +421,7 @@ def get_likes_received(user_id):
 
 
 def like_happened(uid, found_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT likes_sent FROM users WHERE id = ?', (uid,))
     likes_sent = cur.fetchall()[0][0]
@@ -492,7 +439,7 @@ def like_happened(uid, found_id):
 
 
 def set_seen_friends(user_id, found_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT seen_friends FROM users WHERE user_id = ?', (user_id,))
     seen_friends = cur.fetchall()[0][0]
@@ -506,7 +453,7 @@ def set_seen_friends(user_id, found_id):
 
 def clear_seen_friends(user_id):
     likes_received = get_likes_received(user_id)
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET seen_friends = ? WHERE user_id = ?', (likes_received, user_id,))
     conn.commit()
@@ -515,7 +462,7 @@ def clear_seen_friends(user_id):
 
 
 def is_in_seen_friends(user_id, found_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT seen_friends FROM users WHERE user_id = ?', (user_id,))
     seen_friends = cur.fetchall()[0][0]
@@ -530,11 +477,11 @@ def is_in_seen_friends(user_id, found_id):
     return True
 
 
-def add_username_column():
-    conn = sqlite3.connect(database)
+def add_last_seen_event_column():
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     try:
-        cur.execute('ALTER TABLE users ADD username varchar(50)')
+        cur.execute('ALTER TABLE users ADD last_seen_event int DEFAULT -1')
     except sqlite3.OperationalError:
         pass
     conn.commit()
@@ -543,23 +490,8 @@ def add_username_column():
     return
 
 
-def set_username(user_id):
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    try:
-        cur.execute('UPDATE users SET username = ? WHERE user_id = ?',
-                    (f"@{bot.get_chat_member(user_id, user_id).user.username}", user_id,))
-    except TypeError:
-        pass
-    except telebot.apihelper.ApiTelegramException:
-        pass
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
 def set_last_seen_event(user_id, index):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET last_seen_event = ? WHERE user_id = ?', (index, user_id,))
     conn.commit()
@@ -568,7 +500,7 @@ def set_last_seen_event(user_id, index):
 
 
 def get_last_seen_event(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT last_seen_event FROM users WHERE user_id = ?', (user_id,))
     last_seen_event = cur.fetchall()[0][0]
@@ -577,8 +509,21 @@ def get_last_seen_event(user_id):
     return last_seen_event
 
 
+def add_last_seen_idea_column():
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    try:
+        cur.execute('ALTER TABLE users ADD last_seen_idea int DEFAULT -2')
+    except sqlite3.OperationalError:
+        pass
+    conn.commit()
+    cur.close()
+    conn.close()
+    return
+
+
 def set_last_seen_idea(user_id, index):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET last_seen_idea = ? WHERE user_id = ?', (index, user_id,))
     conn.commit()
@@ -587,7 +532,7 @@ def set_last_seen_idea(user_id, index):
 
 
 def get_last_seen_idea(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT last_seen_idea FROM users WHERE user_id = ?', (user_id,))
     last_seen_idea = cur.fetchall()[0][0]
@@ -596,8 +541,21 @@ def get_last_seen_idea(user_id):
     return last_seen_idea
 
 
+def add_last_seen_question_column():
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    try:
+        cur.execute('ALTER TABLE users ADD last_seen_question int DEFAULT -2')
+    except sqlite3.OperationalError:
+        pass
+    conn.commit()
+    cur.close()
+    conn.close()
+    return
+
+
 def set_last_seen_question(user_id, index):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE users SET last_seen_question = ? WHERE user_id = ?', (index, user_id,))
     conn.commit()
@@ -606,7 +564,7 @@ def set_last_seen_question(user_id, index):
 
 
 def get_last_seen_question(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT last_seen_question FROM users WHERE user_id = ?', (user_id,))
     last_seen_question = cur.fetchall()[0][0]
@@ -616,7 +574,7 @@ def get_last_seen_question(user_id):
 
 
 def create_events_table():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int unique,'
                 ' event_name varchar(50), event_price int, event_time varchar(50), event_place varchar(150), '
@@ -628,7 +586,7 @@ def create_events_table():
 
 
 def create_event(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('INSERT INTO events (user_id, views, is_active, is_approved) VALUES (?, 0, 0, 0)', (user_id,))
     conn.commit()
@@ -637,7 +595,7 @@ def create_event(user_id):
 
 
 def set_event_name(user_id, event_name):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_name = ? WHERE user_id = ?', (event_name, user_id,))
     conn.commit()
@@ -646,7 +604,7 @@ def set_event_name(user_id, event_name):
 
 
 def set_event_price(user_id, event_price):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_price = ? WHERE user_id = ?', (event_price, user_id,))
     conn.commit()
@@ -655,7 +613,7 @@ def set_event_price(user_id, event_price):
 
 
 def set_event_time(user_id, event_time):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_time = ? WHERE user_id = ?', (event_time, user_id,))
     conn.commit()
@@ -664,7 +622,7 @@ def set_event_time(user_id, event_time):
 
 
 def set_event_place(user_id, event_place):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_place = ? WHERE user_id = ?', (event_place, user_id,))
     conn.commit()
@@ -673,7 +631,7 @@ def set_event_place(user_id, event_place):
 
 
 def set_event_description(user_id, event_description):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_description = ? WHERE user_id = ?', (event_description, user_id,))
     conn.commit()
@@ -682,7 +640,7 @@ def set_event_description(user_id, event_description):
 
 
 def set_event_photo(user_id, event_photo):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET event_photo = ? WHERE user_id = ?', (event_photo, user_id,))
     conn.commit()
@@ -693,7 +651,7 @@ def set_event_photo(user_id, event_photo):
 def increment_event_views(user_id):
     views = get_event_views(user_id)
 
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET views = ? WHERE user_id = ?', (views + 1, user_id,))
     conn.commit()
@@ -702,7 +660,7 @@ def increment_event_views(user_id):
 
 
 def set_event_is_active(user_id, is_active):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET is_active = ? WHERE user_id = ?', (is_active, user_id,))
     conn.commit()
@@ -714,7 +672,7 @@ def set_event_is_approved(user_id, is_approved):
     if is_approved == 2:
         bot.send_message(user_id, "Твое мероприятие не прошло модерацию, ты можешь удалить его и "
                                   "создать новое согласно описанным правилам!")
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET is_approved = ? WHERE user_id = ?', (is_approved, user_id,))
     conn.commit()
@@ -723,7 +681,7 @@ def set_event_is_approved(user_id, is_approved):
 
 
 def get_event_name(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_name FROM events WHERE user_id = ?', (user_id,))
     event_name = cur.fetchall()[0][0]
@@ -734,7 +692,7 @@ def get_event_name(user_id):
 
 
 def get_event_price(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_price FROM events WHERE user_id = ?', (user_id,))
     event_price = cur.fetchall()[0][0]
@@ -745,7 +703,7 @@ def get_event_price(user_id):
 
 
 def get_event_time(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_time FROM events WHERE user_id = ?', (user_id,))
     event_time = cur.fetchall()[0][0]
@@ -756,7 +714,7 @@ def get_event_time(user_id):
 
 
 def get_event_place(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_place FROM events WHERE user_id = ?', (user_id,))
     event_place = cur.fetchall()[0][0]
@@ -767,7 +725,7 @@ def get_event_place(user_id):
 
 
 def get_event_description(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_description FROM events WHERE user_id = ?', (user_id,))
     event_description = cur.fetchall()[0][0]
@@ -778,7 +736,7 @@ def get_event_description(user_id):
 
 
 def get_event_photo(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT event_photo FROM events WHERE user_id = ?', (user_id,))
     event_photo = cur.fetchall()[0][0]
@@ -789,7 +747,7 @@ def get_event_photo(user_id):
 
 
 def get_event_views(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT views FROM events WHERE user_id = ?', (user_id,))
     event_views = cur.fetchall()[0][0]
@@ -800,7 +758,7 @@ def get_event_views(user_id):
 
 
 def get_how_long_left_event(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT post_time FROM events WHERE user_id = ?', (user_id,))
     post_time = cur.fetchall()[0][0]
@@ -814,7 +772,7 @@ def get_how_long_left_event(user_id):
 
 
 def get_event_is_active(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT is_active FROM events WHERE user_id = ?', (user_id,))
     is_active = cur.fetchall()[0][0]
@@ -825,7 +783,7 @@ def get_event_is_active(user_id):
 
 
 def get_event_is_approved(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT is_approved FROM events WHERE user_id = ?', (user_id,))
     is_approved = cur.fetchall()[0][0]
@@ -836,7 +794,7 @@ def get_event_is_approved(user_id):
 
 
 def delete_event(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('DELETE FROM events WHERE user_id = ?', (user_id,))
     conn.commit()
@@ -845,7 +803,7 @@ def delete_event(user_id):
 
 
 def check_event_exists(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     try:
         cur.execute('SELECT event_photo FROM events WHERE user_id = ?', (user_id,))
@@ -872,7 +830,7 @@ def check_event_exists(user_id):
 def approve_event(user_id):
     current_datetime = datetime.now()
     registration_date = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET post_time = ? WHERE user_id = ?', (registration_date, user_id,))
     conn.commit()
@@ -887,7 +845,7 @@ def deactivate_expired_events():
     two_days_ago = datetime.now() - timedelta(days=2)
     two_days_ago_str = two_days_ago.strftime('%Y-%m-%d %H:%M:%S')
 
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE events SET is_active = 0 WHERE post_time < ?', (two_days_ago_str,))
     conn.commit()
@@ -896,7 +854,7 @@ def deactivate_expired_events():
 
 
 def get_events_not_approved():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM events WHERE is_approved = 0 AND is_active = 1')
     events = cur.fetchall()
@@ -907,7 +865,7 @@ def get_events_not_approved():
 
 
 def get_events_approved():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM events WHERE is_approved = 1 AND is_active = 1')
     events = cur.fetchall()
@@ -918,7 +876,7 @@ def get_events_approved():
 
 
 def get_event_by_name(name):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM events WHERE event_name = ?', (name,))
     event = cur.fetchall()
@@ -929,7 +887,7 @@ def get_event_by_name(name):
 
 
 def create_ideas_table():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS ideas (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int unique,'
                 ' idea_name varchar(50), idea_description varchar(3000))')
@@ -939,7 +897,7 @@ def create_ideas_table():
 
 
 def create_idea(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('INSERT INTO ideas (user_id) VALUES (?)', (user_id,))
     conn.commit()
@@ -950,7 +908,7 @@ def create_idea(user_id):
 def check_idea_exists(user_id):
     index_error = False
     exists = False
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT idea_description FROM ideas WHERE user_id = ?', (user_id,))
     try:
@@ -966,7 +924,7 @@ def check_idea_exists(user_id):
 
 
 def set_idea_name(user_id, name):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE ideas SET idea_name = ? WHERE user_id = ?', (name, user_id,))
     conn.commit()
@@ -975,7 +933,7 @@ def set_idea_name(user_id, name):
 
 
 def set_idea_description(user_id, description):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE ideas SET idea_description = ? WHERE user_id = ?', (description, user_id,))
     conn.commit()
@@ -984,7 +942,7 @@ def set_idea_description(user_id, description):
 
 
 def get_idea_name(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT idea_name FROM ideas WHERE user_id = ?', (user_id,))
     idea_name = cur.fetchall()[0][0]
@@ -994,7 +952,7 @@ def get_idea_name(user_id):
 
 
 def get_idea_description(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT idea_description FROM ideas WHERE user_id = ?', (user_id,))
     idea_description = cur.fetchall()[0][0]
@@ -1004,7 +962,7 @@ def get_idea_description(user_id):
 
 
 def delete_idea(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('DELETE FROM ideas WHERE user_id = ?', (user_id,))
     conn.commit()
@@ -1013,7 +971,7 @@ def delete_idea(user_id):
 
 
 def get_ideas():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM ideas WHERE idea_description IS NOT NULL', )
     ideas = cur.fetchall()
@@ -1024,7 +982,7 @@ def get_ideas():
 
 
 def create_questions_answers_tables():
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS questions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int,'
                 ' question varchar(100), post_time varchar(100))')
@@ -1036,7 +994,7 @@ def create_questions_answers_tables():
 
 
 def create_question(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('INSERT INTO questions (user_id) VALUES (?)', (user_id,))
     conn.commit()
@@ -1046,7 +1004,7 @@ def create_question(user_id):
 
 def check_question_exists(uid, user_id):
     exists = True
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute(
         'SELECT question FROM questions WHERE id = ? AND question IS NOT NULL AND user_id != ? AND question NOT IN '
@@ -1061,30 +1019,20 @@ def check_question_exists(uid, user_id):
 
 
 def get_question_by_uid(uid, user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute(
-        'SELECT * FROM questions WHERE id = ? AND question IS NOT NULL AND user_id != ? AND question NOT IN '
+        'SELECT question FROM questions WHERE id = ? AND question IS NOT NULL AND user_id != ? AND question NOT IN '
         '(SELECT question FROM answers WHERE user_id = ?)', (uid, user_id, user_id))
-    question = cur.fetchall()
+    question = cur.fetchall()[0][0]
     conn.commit()
     cur.close()
     conn.close()
     return question
 
 
-def delete_question_by_uid(uid):
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute(
-        'DELETE FROM questions WHERE id = ?', (uid,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
 def create_answer(user_id, question, answer):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('INSERT INTO answers (user_id, question, answer) VALUES (?, ?, ?)', (user_id, question, answer))
     conn.commit()
@@ -1095,7 +1043,7 @@ def create_answer(user_id, question, answer):
 def set_question(uid, question):
     current_datetime = datetime.now()
     registration_date = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('UPDATE questions SET question = ?, post_time = ? '
                 'WHERE id = ?', (question, registration_date, uid,))
@@ -1105,7 +1053,7 @@ def set_question(uid, question):
 
 
 def get_asked_questions(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM questions WHERE user_id = ? AND question IS NOT NULL', (user_id,))
     questions = cur.fetchall()
@@ -1116,7 +1064,7 @@ def get_asked_questions(user_id):
 
 
 def get_questions(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM questions WHERE question IS NOT NULL AND user_id != ? AND question NOT IN '
                 '(SELECT question FROM answers WHERE user_id = ?)', (user_id, user_id,))
@@ -1128,7 +1076,7 @@ def get_questions(user_id):
 
 
 def get_last_added_question_uid(user_id):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('SELECT * FROM questions WHERE user_id  = ?', (user_id,))
     questions = cur.fetchall()
@@ -1139,9 +1087,9 @@ def get_last_added_question_uid(user_id):
 
 
 def get_answers(question):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
-    cur.execute('SELECT * FROM answers WHERE question = ? AND answer IS NOT NULL', (question,))
+    cur.execute('SELECT * FROM answers WHERE question  = ? AND answer IS NOT NULL', (question,))
     answers = cur.fetchall()
     conn.commit()
     cur.close()
@@ -1150,9 +1098,21 @@ def get_answers(question):
 
 
 def delete_answer(answer):
-    conn = sqlite3.connect(database)
+    conn = sqlite3.connect('reu_zephyr.sql')
     cur = conn.cursor()
     cur.execute('DELETE FROM answers WHERE answer = ?', (answer,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def delete_expired_questions():
+    one_day_ago = datetime.now() - timedelta(days=1)
+    one_day_ago_str = one_day_ago.strftime('%Y-%m-%d %H:%M:%S')
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('DELETE FROM questions WHERE post_time < ?', (one_day_ago_str,))
+    cur.execute('DELETE FROM answers WHERE question NOT IN (SELECT question FROM questions)')
     conn.commit()
     cur.close()
     conn.close()
@@ -1161,10 +1121,17 @@ def delete_answer(answer):
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
-    create_users_table()
-    create_ideas_table()
-    create_events_table()
-    create_questions_answers_tables()
+
+    conn = sqlite3.connect('reu_zephyr.sql')
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int unique, '
+                'name varchar(50), age int, gender varchar(10), school varchar(7), photo varchar(200), likes_sent '
+                'varchar(30000), likes_received varchar(30000), looking_for int, found_id int, seen_friends '
+                'varchar(30000))')
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     if check_user_exists(user_id):
         bot.send_message(message.chat.id, "У тебя уже есть анкета. Используй /menu чтобы начать взаимодействие")
@@ -1176,16 +1143,8 @@ def start(message):
 
 
 def ask_age(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text.lower() == '/start':
         return start(message)
@@ -1195,21 +1154,13 @@ def ask_age(message):
         set_name(user_id, name)
         bot.send_message(message.chat.id, f"Приятно познакомиться, {name}! Сколько тебе лет?")
     else:
-        bot.send_message(message.chat.id, f"Введи целое число без букв, соответствующее твоему возрасту")
+        bot.send_message(message.chat.id, f"Введи целое число без букв")
     bot.register_next_step_handler(message, ask_gender)
 
 
 def ask_gender(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
     if message.text.lower() == '/start':
@@ -1223,8 +1174,6 @@ def ask_gender(message):
     if not check_age_exists(user_id):
         try:
             age = int(message.text.strip())
-            if age < 15 or age > 95:
-                return ask_age(message)
             set_age(user_id, age)
         except ValueError:
             return ask_age(message)
@@ -1235,40 +1184,34 @@ def ask_gender(message):
 
 
 def ask_school(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text.lower() == '/start':
         return start(message)
 
     school_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
-    if len(schools) > 15:
-        for i in range(2, len(schools), 3):
-            school_markup.row(types.KeyboardButton(schools[i - 2]), types.KeyboardButton(schools[i - 1]),
-                              types.KeyboardButton(schools[i]))
-        if len(schools) % 3 == 1:
-            school_markup.row(types.KeyboardButton(schools[-1]))
-        if len(schools) % 3 == 2:
-            school_markup.row(types.KeyboardButton(schools[-2]), types.KeyboardButton(schools[-1]))
-    else:
-        for i in range(1, len(schools), 2):
-            school_markup.row(types.KeyboardButton(schools[i - 1]), types.KeyboardButton(schools[i]))
-        if len(schools) % 2 == 1:
-            school_markup.row(types.KeyboardButton('Преподователь'))
+    btn1 = types.KeyboardButton('ИПАМ')
+    btn2 = types.KeyboardButton('ВШКМиС')
+    btn3 = types.KeyboardButton('ВШФ')
+    btn4 = types.KeyboardButton('ВШСГН')
+    btn5 = types.KeyboardButton('ВИШ НМИТ')
+    btn6 = types.KeyboardButton('ВШЭИБ')
+    btn7 = types.KeyboardButton('ВШМ')
+    btn8 = types.KeyboardButton('ВШКИ')
+    btn9 = types.KeyboardButton('ВШП')
+    btn10 = types.KeyboardButton('Преподователь')
+    school_markup.row(btn1, btn2)
+    school_markup.row(btn3, btn4)
+    school_markup.row(btn5, btn6)
+    school_markup.row(btn7, btn8)
+    school_markup.row(btn9, btn10)
 
     if not check_gender_exists(user_id):
         if message.text == "Парень 👨" or message.text == "Девушка 👩":
             gender = message.text
             set_gender(user_id, gender)
-            bot.send_message(message.chat.id, f"{ask_school_text}", reply_markup=school_markup)
+            bot.send_message(message.chat.id, "C какой ты высшей школы?", reply_markup=school_markup)
             bot.register_next_step_handler(message, ask_photo)
 
         else:
@@ -1279,24 +1222,15 @@ def ask_school(message):
 
 
 def ask_photo(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
-    if message.text in schools:
+    if message.text in ['ИПАМ', 'ВШКМиС', 'ВШФ', 'ВШСГН', 'ВИШ НМИТ', 'ВШЭИБ', 'ВШМ', 'ВШКИ', 'ВШП', 'Преподователь']:
         school = message.text
         set_school(user_id, school)
         bot.send_message(message.chat.id,
-                         "Теперь отправь свою фотографию, но имей ввиду, другие пользователи смогут ее видеть!",
-                         reply_markup=types.ReplyKeyboardRemove())
+                         "Теперь отправь свою фотографию, но имей ввиду, другие пользователи смогут ее видеть!")
         bot.register_next_step_handler(message, finish_registration)
     elif check_school_exists(user_id):
         bot.send_message(message.chat.id, "Отправь фотографию🫵")
@@ -1307,16 +1241,8 @@ def ask_photo(message):
 
 def finish_registration(message):
     if message.content_type == "text":
-        if message.text == "/menu":
-            return menu(message)
-        if message.text == '/start':
-            return start(message)
-        if message.text == '/profile':
-            return profile(message)
         if message.text == '/cancel':
             return cancel(message)
-        if message.text == '/delete':
-            return delete(message)
         else:
             return ask_photo(message)
     user_id = message.chat.id
@@ -1367,16 +1293,8 @@ def profile(message):
 
 
 def handle_profile_change(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     elif message.text == "Изменить фото":
         bot.send_message(message.chat.id, "Отправь новое фото, но имей ввиду, другие пользовтаели смогут его видеть!")
         bot.register_next_step_handler(message, change_photo)
@@ -1394,16 +1312,8 @@ def handle_profile_change(message):
 def change_photo(message):
     user_id = message.chat.id
     if message.content_type == "text":
-        if message.text == "/menu":
-            return menu(message)
-        if message.text == '/start':
-            return start(message)
-        if message.text == '/profile':
-            return profile(message)
         if message.text == '/cancel':
             return cancel(message)
-        if message.text == '/delete':
-            return delete(message)
         else:
             bot.send_message(user_id, "Отправь фото")
             bot.register_next_step_handler(message, change_photo)
@@ -1437,16 +1347,8 @@ def change_photo(message):
 
 def change_name(message):
     user_id = message.chat.id
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     else:
         set_name(user_id, message.text)
         bot.send_message(user_id, "Имя успешно изменено")
@@ -1454,16 +1356,8 @@ def change_name(message):
 
 def change_age(message):
     user_id = message.chat.id
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     else:
         try:
             age = int(message.text)
@@ -1494,16 +1388,8 @@ def delete(message):
 
 
 def response_to_delete(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     if message.text == "Да":
         delete_user(message.chat.id)
         bot.send_message(message.chat.id, "Ты всегда можешь вернуться при помощи /start. Удачи🤡")
@@ -1536,16 +1422,8 @@ def admin(message):
 
 
 def handle_admin(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     if message.text == "📈Узнать статистику по боту":
         return stats(message)
     elif message.text == "⚠️Отправить предупреждение":
@@ -1563,31 +1441,15 @@ def handle_admin(message):
 
 
 def handle_admin_activate_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     bot.send_message(message.chat.id, "Введи название мероприятия, которое хочешь активировать")
     bot.register_next_step_handler(message, admin_activate_event)
 
 
 def admin_activate_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     name = message.text
     event = get_event_by_name(name)
     if len(event) == 0:
@@ -1611,30 +1473,18 @@ def admin_activate_event(message):
 
 def stats(message):
     count = get_amount_of_users()
-    active = get_amount_of_active_users()
-    projects = get_amount_of_projects()
-    questions = get_amount_of_questions()
-    bot.send_message(message.chat.id,
-                     f"Пользователи: {count}\nАктивные: {active}\nПроекты: {projects}\nВопросы: {questions}",
-                     reply_markup=types.ReplyKeyboardRemove())
+    bot.send_message(message.chat.id, f"Кол-во пользователей: {count}")
     return
 
 
 def entertain():
     user_ids = get_user_ids()
-    counter = 0
     for user_id in user_ids:
         if not check_user_exists(user_id):
             try:
-                bot.send_message(user_id, f"Давай-давай заканчивай регистрацию в /start и присоединяйся, тебя ждут"
-                                          f":\n\n👋знакомства как в ДВ с другими студентами {university_name}\n🧠возм"
-                                          f"ожность рассказать про свой проект и найти единомышленников\n🥳возможност"
-                                          f"ь найти мероприятия для студентов\n❓можешь задать интересующие тебя вопр"
-                                          f"осы студентам {university_name}")
-                counter += 1
+                bot.send_message(user_id, "Более 400 студентов РЭУ уже ждут тебя! Присоединйся используя /start")
             except telebot.apihelper.ApiTelegramException:
                 pass
-    bot.send_message(524931933, str(counter))
     return
 
 
@@ -1656,24 +1506,16 @@ def ask_for_support():
     for user_id in user_ids:
         try:
             bot.send_message(user_id,
-                             f"Расскажи друзьям о боте, разошли его по группам, чтобы усилить наше студенческое "
-                             f"коммуникационное сообщество! 🌐🤝 \n\n#КоммуникационныйЦентр{university_name}")
+                             "Расскажи друзьям о боте, разошли его по группам, чтобы усилить наше студенческое "
+                             "коммуникационное сообщество! 🌐🤝 \n\n#БотЗнакомствРЭУ")
         except telebot.apihelper.ApiTelegramException:
             pass
     return
 
 
 def moderate_events(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     global checked_event_index
     events = get_events_not_approved()
 
@@ -1716,16 +1558,8 @@ def handle_send_message_to_everyone(message):
 
 
 def send_message_to_everyone(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     media_group = []
     if message.photo:
         # Set the caption only for the first photo
@@ -1753,10 +1587,6 @@ def send_message_to_everyone(message):
 @bot.message_handler(commands=['menu'])
 def menu(message):
     user_id = message.chat.id
-    if not check_user_exists(user_id):
-        bot.send_message(user_id, "Сначала создай профиль, используя /start",
-                         reply_markup=types.ReplyKeyboardRemove())
-        return
     set_last_seen_idea(user_id, -2)
     set_last_seen_event(user_id, -1)
     set_last_seen_question(user_id, -2)
@@ -1776,21 +1606,13 @@ def menu(message):
 
 
 def handle_menu(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
     if message.text == "🤝Знакомства":
-        bot.send_message(user_id, f"Привет 👋\nЗдесь ты можешь обрести новые знакомства со студентами и "
-                                  f"преподователями {university_name}")
+        bot.send_message(user_id, "Привет 👋\nЗдесь ты можешь обрести новые знакомства со студентами и "
+                                  "преподователями РЭУ")
         friends_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, is_persistent=True)
         btn1 = types.KeyboardButton('🔍Поиск друзей')
         btn2 = types.KeyboardButton('❤️Лайки на мой профиль')
@@ -1803,11 +1625,12 @@ def handle_menu(message):
 
     elif message.text == "🧠Проекты":
         create_ideas_table()
+        add_last_seen_idea_column()
         bot.send_message(user_id, "Привет 👋\nЗдесь ты можешь найти команду для своего проекта,"
                                   " а так же присоединиться к уже существующему проекту!")
         projects_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, is_persistent=True)
         btn1 = types.KeyboardButton('🔍Я ищу проекты')
-        btn2 = types.KeyboardButton('☄️Добавить проект')
+        btn2 = types.KeyboardButton('☄️Я ищу напарника в проект')
         btn3 = types.KeyboardButton('💡Мой проект')
         btn4 = types.KeyboardButton('Отмена')
         projects_markup.row(btn1)
@@ -1819,9 +1642,9 @@ def handle_menu(message):
 
     elif message.text == "🥳Мероприятия":
         create_events_table()
-        bot.send_message(user_id, f"Привет 👋\nВ этом разделе можно пропиарить мероприятие и найти гостей среди"
-                                  f" студентов и преподователей {university_name}. Более того, ты можешь сам(а) "
-                                  f"стать гостем!👑")
+        add_last_seen_event_column()
+        bot.send_message(user_id, "Привет 👋\nВ этом разделе можно пропиарить мероприятие и найти гостей среди"
+                                  " студентов и преподователей РЭУ. Более того, ты можешь сам(а) стать гостем!👑")
         events_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, is_persistent=True)
         btn1 = types.KeyboardButton('🎉Я ищу мероприятия')
         btn2 = types.KeyboardButton('💵Пропиарить мероприятие')
@@ -1836,10 +1659,9 @@ def handle_menu(message):
 
     elif message.text == "Другое":
         create_questions_answers_tables()
-        bot.send_message(user_id,
-                         f"Привет 👋\nВ этом разделе ты можешь задать вопросы всему сообществу {university_name},"
-                         f" либо "
-                         "же помочь студентам найти нужные им ответы! В единстве сила✊")
+        add_last_seen_question_column()
+        bot.send_message(user_id, "Привет 👋\nВ этом разделе ты можешь задать вопросы всему сообществу РЭУ, либо "
+                                  "же помочь студентам найти нужные им ответы! В единстве сила✊")
         other_markup = types.ReplyKeyboardMarkup(resize_keyboard=True, is_persistent=True)
         btn1 = types.KeyboardButton('❓Задать вопрос')
         btn2 = types.KeyboardButton('📈Ответить на вопросы других пользователей')
@@ -1856,16 +1678,8 @@ def handle_menu(message):
 
 
 def handle_menu_choice(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
     if message.text == "🔍Поиск друзей":
@@ -1880,7 +1694,7 @@ def handle_menu_choice(message):
             return
         return send_like_first(message)
 
-    elif message.text == "☄️Добавить проект":
+    elif message.text == "☄️Я ищу напарника в проект":
         return add_idea(message)
     elif message.text == "🔍Я ищу проекты":
         return send_idea(message)
@@ -1939,7 +1753,7 @@ def send_profile_first(message):
         set_seen_friends(user_id, found_id)
         found_user_id = get_user_id(found_id)
         try:
-            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
 
@@ -1958,7 +1772,7 @@ def send_profile_first(message):
     possible = True
     users_uids = get_user_uids()
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
+    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id):
         if len(users_uids) == 1:
             possible = False
             break
@@ -2011,7 +1825,7 @@ def send_profile_second(message):
         like_happened(uid, found_id)
         found_user_id = get_user_id(found_id)
         try:
-            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
 
@@ -2027,7 +1841,8 @@ def send_profile_second(message):
     possible = True
     users_uids = get_user_uids()
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
+    while is_in_seen_friends(user_id, found_id) or not check_user_exists(
+            found_user_id):
         if len(users_uids) == 1:
             possible = False
             break
@@ -2131,7 +1946,7 @@ def send_like_second(message):
 
         like_received_user_id = get_user_id(like_received_id)
         try:
-            bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
 
@@ -2172,16 +1987,8 @@ def send_like_second(message):
 
 
 def add_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if check_idea_exists(user_id):
         bot.send_message(user_id, "Твой проект уже добавлен, используй /menu чтобы посмотреть",
@@ -2199,36 +2006,20 @@ def add_idea(message):
 
 
 def ask_idea_name(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "✅Я принимаю условия":
         create_idea(user_id)
         bot.send_message(user_id, "Введи название своего проекта")
         bot.register_next_step_handler(message, ask_idea_description)
     else:
-        return menu(message)
+        return menu()
 
 
 def ask_idea_description(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_idea_name(user_id, message.text)
     bot.send_message(user_id, "Отправь описание своего проекта")
@@ -2236,16 +2027,8 @@ def ask_idea_description(message):
 
 
 def show_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_idea_description(user_id, message.text)
     check_idea_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
@@ -2263,16 +2046,8 @@ def show_idea(message):
 
 
 def show_idea_to_creator(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if not check_idea_exists(user_id):
         bot.send_message(user_id, "Ты не добавил проект, исправь это в /menu",
@@ -2294,20 +2069,11 @@ def show_idea_to_creator(message):
 
 
 def response_to_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "✅Все верно":
-        bot.send_message(user_id, "Твой проект выложен! Продолжай используя /menu",
-                         reply_markup=types.ReplyKeyboardRemove())
+        bot.send_message(user_id, "Твой проект выложен! Продолжай используя /menu")
         return
     elif message.text == "✍️Изменить данные":
         return change_idea(message)
@@ -2318,16 +2084,8 @@ def response_to_idea(message):
 
 
 def change_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     change_idea_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton("Название")
@@ -2340,16 +2098,8 @@ def change_idea(message):
 
 
 def handle_change_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "Название":
         bot.send_message(user_id, "Отправь новое название")
@@ -2362,71 +2112,36 @@ def handle_change_idea(message):
 
 
 def change_idea_name(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_idea_name(user_id, message.text)
-    bot.send_message(user_id, "Название проекта изменено! Продолжи, используя /menu",
-                     reply_markup=types.ReplyKeyboardRemove())
-    return
+    bot.send_message(user_id, "Название проекта изменено! Продолжи, используя /menu")
 
 
 def change_idea_description(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_idea_description(user_id, message.text)
-    bot.send_message(user_id, "Описание проекта изменено! Продолжи, используя /menu",
-                     reply_markup=types.ReplyKeyboardRemove())
-    return
+    bot.send_message(user_id, "Описание проекта изменено! Продолжи, используя /menu")
+    return menu(message)
 
 
 def handle_delete_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     reply_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('✅Да')
     btn2 = types.KeyboardButton('❌Нет')
     reply_markup.row(btn1, btn2)
-    bot.send_message(message.chat.id, "Ты уверен(а) что хочешь удалить свой проект?", reply_markup=reply_markup)
+    bot.send_message(message.chat.id, "Ты уверен что хочешь удалить свой проект?", reply_markup=reply_markup)
     bot.register_next_step_handler(message, response_to_delete_idea)
 
 
 def response_to_delete_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     if message.text == "✅Да":
         delete_idea(message.chat.id)
         bot.send_message(message.chat.id, "Твой проект успешно удален")
@@ -2434,16 +2149,8 @@ def response_to_delete_idea(message):
 
 
 def send_idea(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     ideas = get_ideas()
     last_seen_idea = get_last_seen_idea(user_id)
@@ -2481,16 +2188,8 @@ def send_idea(message):
 
 
 def send_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     deactivate_expired_events()
     user_id = message.chat.id
     events = get_events_approved()
@@ -2536,16 +2235,8 @@ def send_event(message):
 
 
 def add_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if check_event_exists(user_id):
         bot.send_message(user_id, "Вот твое мероприятие:", reply_markup=types.ReplyKeyboardRemove())
@@ -2572,16 +2263,8 @@ def add_event(message):
 
 
 def ask_event_name(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "✅Я принимаю условия":
         create_event(user_id)
@@ -2593,16 +2276,8 @@ def ask_event_name(message):
 
 
 def ask_event_price(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_name(user_id, message.text)
     bot.send_message(user_id, "Какова стоимость входа(напиши сумму целыми числами в рублях без букв)?")
@@ -2610,16 +2285,8 @@ def ask_event_price(message):
 
 
 def ask_event_time(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     try:
         set_event_price(user_id, int(message.text))
@@ -2632,16 +2299,8 @@ def ask_event_time(message):
 
 
 def ask_event_place(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_time(user_id, message.text)
     bot.send_message(user_id, "Где будет проходить твое мероприятие?")
@@ -2649,16 +2308,8 @@ def ask_event_place(message):
 
 
 def ask_event_description(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_place(user_id, message.text)
     bot.send_message(user_id, "Отправь описание своего мероприятия, но помни про правила!")
@@ -2666,16 +2317,8 @@ def ask_event_description(message):
 
 
 def ask_event_photo(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_description(user_id, message.text)
     bot.send_message(user_id, "Отправь фотографию своего мероприятия!")
@@ -2683,16 +2326,8 @@ def ask_event_photo(message):
 
 
 def finish_event_registration(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
     photo_id = message.photo[-1].file_id
@@ -2717,16 +2352,8 @@ def finish_event_registration(message):
 
 
 def show_event_to_creator(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
 
     check_event_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
@@ -2747,16 +2374,8 @@ def show_event_to_creator(message):
 
 
 def response_to_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     if message.text == "✅Все верно, перейти к оплате":
         return proceed_to_payment(message)
     elif message.text == "✍️Изменить данные":
@@ -2770,16 +2389,8 @@ def response_to_event(message):
 
 
 def proceed_to_payment(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     bot.send_message(user_id, "Для оплаты и ознакомления с тарифом, пиши администратору @zephyrs_admin",
                      reply_markup=types.ReplyKeyboardRemove())
@@ -2787,16 +2398,8 @@ def proceed_to_payment(message):
 
 
 def change_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     change_event_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton("Название")
@@ -2814,16 +2417,8 @@ def change_event(message):
 
 
 def handle_change_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "Название":
         bot.send_message(user_id, "Отправь новое название")
@@ -2848,16 +2443,8 @@ def handle_change_event(message):
 
 
 def change_event_name(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_name(user_id, message.text)
     bot.send_message(user_id, "Название мероприятия изменено")
@@ -2865,16 +2452,8 @@ def change_event_name(message):
 
 
 def change_event_price(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     try:
         price = int(message.text)
@@ -2887,16 +2466,8 @@ def change_event_price(message):
 
 
 def change_event_time(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_time(user_id, message.text)
     bot.send_message(user_id, "Дата проведения мероприятия изменена")
@@ -2904,16 +2475,8 @@ def change_event_time(message):
 
 
 def change_event_place(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_place(user_id, message.text)
     bot.send_message(user_id, "Место проведения мероприятия изменено")
@@ -2921,16 +2484,8 @@ def change_event_place(message):
 
 
 def change_event_description(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     set_event_description(user_id, message.text)
     bot.send_message(user_id, "Описание мероприятия изменено")
@@ -2938,6 +2493,8 @@ def change_event_description(message):
 
 
 def change_event_photo(message):
+    if message.text == '/cancel':
+        return cancel(message)
     user_id = message.chat.id
     if message.content_type == "text":
         if message.text == "/menu":
@@ -2948,8 +2505,6 @@ def change_event_photo(message):
             return profile(message)
         if message.text == '/cancel':
             return cancel(message)
-        if message.text == '/delete':
-            return delete(message)
         else:
             bot.send_message(user_id, "Отправь фото")
             bot.register_next_step_handler(message, change_event_photo)
@@ -2979,16 +2534,8 @@ def change_event_photo(message):
 
 
 def handle_delete_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     reply_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('✅Да')
     btn2 = types.KeyboardButton('❌Нет')
@@ -2998,16 +2545,8 @@ def handle_delete_event(message):
 
 
 def response_to_delete_event(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     if message.text == "✅Да":
         delete_event(message.chat.id)
         bot.send_message(message.chat.id, "Твое мероприятие успешно удалено")
@@ -3015,32 +2554,16 @@ def response_to_delete_event(message):
 
 
 def event_statistics(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     bot.send_message(message.chat.id,
                      f"Просмотры: {get_event_views(message.chat.id)}\nБудет снято"
                      f": {get_how_long_left_event(message.chat.id)}")
 
 
 def add_question(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     create_question(user_id)
     bot.send_message(user_id, "Задай свой вопрос", reply_markup=types.ReplyKeyboardRemove())
@@ -3048,16 +2571,8 @@ def add_question(message):
 
 
 def ask_question(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     last_added_question_uid = get_last_added_question_uid(user_id)
     set_question(last_added_question_uid, message.text)
@@ -3066,16 +2581,9 @@ def ask_question(message):
 
 
 def send_question(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
+    delete_expired_questions()
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     questions = get_questions(user_id)
     last_seen_question = get_last_seen_question(user_id)
@@ -3085,8 +2593,7 @@ def send_question(message):
                          reply_markup=types.ReplyKeyboardRemove())
         bot.register_next_step_handler(message, enter_answer)
         return
-    if user_id == 524931933 and message.text == "Удалить этот вопрос":
-        delete_question_by_uid(last_seen_question)
+
     if last_seen_question == -2:
         try:
             last_seen_question = questions[-1][0] + 1
@@ -3111,67 +2618,42 @@ def send_question(message):
                              reply_markup=types.ReplyKeyboardRemove())
             return
 
-    question = get_question_by_uid(last_seen_question, user_id)[0][2]
+    question = get_question_by_uid(last_seen_question, user_id)
     question_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton("Ответить на вопрос🛟")
     btn2 = types.KeyboardButton("Следующий вопрос➡️")
+
     question_markup.row(btn1)
     question_markup.row(btn2)
-
-    if user_id == 524931933:
-        btn3 = types.KeyboardButton("Удалить этот вопрос")
-        question_markup.row(btn3)
-
     set_last_seen_question(user_id, last_seen_question)
     bot.send_message(user_id, question, reply_markup=question_markup)
     bot.register_next_step_handler(message, send_question)
 
 
 def enter_answer(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     question = get_question_by_uid(get_last_seen_question(user_id), user_id)
     answer = message.text
-    create_answer(user_id, question[0][2], answer)
+    create_answer(user_id, question, answer)
     bot.send_message(user_id, "Ответ отправлен, ты можешь продолжать!")
-    try:
-        bot.send_message(question[0][1], f"На этот ваш вопрос пришел ответ: {question[0][2]}\nИспользуй /menu, "
-                                         f"чтобы посмотерть")
-    except telebot.apihelper.ApiTelegramException:
-        pass
     return send_question(message)
 
 
 def send_questions_list(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     questions_asked = get_asked_questions(user_id)
     if len(questions_asked) == 0:
-        bot.send_message(user_id, "Упс😅, кажется ты не задавал(а) вопросов, либо же твой вопрос был удален."
-                                  " Но ты всегда можешь задать новый в /menu", reply_markup=types.ReplyKeyboardRemove())
+        bot.send_message(user_id, "Упс😅, кажется ты не задавал(а) вопросов, либо же прошло более двух дней с"
+                                  " момента размещения вопроса. Но ты всегда можешь задать новый в /menu")
         return
     text = "Введи номер вопроса, который тебя интересует: \n"
     for i in range(1, len(questions_asked) + 1):
-        if len(questions_asked[i - 1][2]) > 28:
-            text += f"{i}. {questions_asked[i - 1][2][:28]}..?\n"
+        if len(questions_asked[i - 1][2]) > 22:
+            text += f"{i}. {questions_asked[i - 1][2][:22]}..?\n"
         else:
             text += f"{i}. {questions_asked[i - 1][2]}\n"
 
@@ -3180,16 +2662,8 @@ def send_questions_list(message):
 
 
 def handle_question_number(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     try:
         question_number = int(message.text)
@@ -3198,33 +2672,22 @@ def handle_question_number(message):
         return send_answers(message)
     except ValueError:
         return send_questions_list(message)
-    except IndexError:
-        return send_questions_list(message)
 
 
 def send_answers(message):
-    if message.text == "/menu":
-        return menu(message)
-    if message.text == '/start':
-        return start(message)
-    if message.text == '/profile':
-        return profile(message)
     if message.text == '/cancel':
         return cancel(message)
-    if message.text == '/delete':
-        return delete(message)
     user_id = message.chat.id
     if message.text == "Выбрать другой вопрос🫥":
         return send_questions_list(message)
-    question = get_question_by_uid(get_last_seen_question(user_id), 1)[0][2]
+    question = get_question_by_uid(get_last_seen_question(user_id), 1)
     answers = get_answers(question)
     try:
         text = (f"<b>Вопрос: {question}\n\n</b>Ответ от @"
                 f"{bot.get_chat_member(answers[0][1], answers[0][1]).user.username}:\n{answers[0][3]}")
         delete_answer(answers[0][3])
     except IndexError:
-        bot.send_message(user_id, "Новых ответов нет, возвращайся позже, используя /menu",
-                         reply_markup=types.ReplyKeyboardRemove())
+        bot.send_message(user_id, "Новых ответов нет, возвращайся позже, используя /menu")
         return
     except telebot.apihelper.ApiTelegramException:
         text = f"Ответ от @None:\n{answers[0][3]}"
