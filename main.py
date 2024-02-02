@@ -189,6 +189,16 @@ def set_looking_for(user_id, looking_for):
     conn.close()
 
 
+def get_looking_for(user_id):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('SELECT looking_for FROM users WHERE user_id = ?', (user_id,))
+    looking_for = cur.fetchall()[0][0]
+    cur.close()
+    conn.close()
+    return looking_for
+
+
 def set_found_id(user_id, found_id):
     conn = sqlite3.connect(database)
     cur = conn.cursor()
@@ -396,11 +406,21 @@ def get_user_ids():
     return user_ids
 
 
-def get_user_uids():
+def get_user_uids(user_id):
+    looking_for = get_looking_for(user_id)
+    if looking_for == 1:
+        found_gender_cant_be = "Девушка 👩"
+    elif looking_for == 2:
+        found_gender_cant_be = "Парень 👨"
+    else:
+        found_gender_cant_be = ""
     user_uids = []
     conn = sqlite3.connect(database)
     cur = conn.cursor()
-    cur.execute('SELECT id FROM users')
+    cur.execute('SELECT id FROM users WHERE gender != ? AND photo IS NOT NULL AND user_id NOT IN '
+                '(SELECT user_id FROM blocks WHERE blocked_user_id = ?) AND user_id NOT IN '
+                '(SELECT blocked_user_id FROM blocks WHERE user_id = ?)',
+                (found_gender_cant_be, user_id, user_id))
     uids = cur.fetchall()
     for el in uids:
         user_uids.append(el[0])
@@ -473,6 +493,17 @@ def get_likes_received(user_id):
     return likes_received
 
 
+def get_likes_sent(user_id):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('SELECT likes_sent FROM users WHERE user_id = ?', (user_id,))
+    likes_sent = cur.fetchall()[0][0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return likes_sent
+
+
 def like_happened(uid, found_id):
     conn = sqlite3.connect(database)
     cur = conn.cursor()
@@ -506,9 +537,10 @@ def set_seen_friends(user_id, found_id):
 
 def clear_seen_friends(user_id):
     likes_received = get_likes_received(user_id)
+    likes_sent = get_likes_sent(user_id)
     conn = sqlite3.connect(database)
     cur = conn.cursor()
-    cur.execute('UPDATE users SET seen_friends = ? WHERE user_id = ?', (likes_received, user_id,))
+    cur.execute('UPDATE users SET seen_friends = ? WHERE user_id = ?', (likes_received + likes_sent, user_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -1158,6 +1190,94 @@ def delete_answer(answer):
     conn.close()
 
 
+def create_blocks_table():
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS blocks (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id int,'
+                ' blocked_user_id, date varchar(100))')
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def block_user(user_id, blocked_user_id):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('INSERT INTO blocks (user_id, blocked_user_id, date) VALUES (?, ?, ?)',
+                (user_id, blocked_user_id, datetime.now()))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def remove_expired_blocks():
+    three_days_ago = datetime.now() - timedelta(days=3)
+    three_days_ago_str = three_days_ago.strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('DELETE FROM blocks WHERE date < ?', (three_days_ago_str,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def create_reports_amount_column():
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    try:
+        cur.execute('ALTER TABLE users ADD reports_amount int DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass
+    conn.commit()
+    cur.close()
+    conn.close()
+    return
+
+
+def get_reports_amount(user_id):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('SELECT reports_amount FROM users WHERE user_id = ?', (user_id,))
+    reports_amount = cur.fetchall()[0][0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return reports_amount
+
+
+def got_reported(user_id):
+    reports_amount = get_reports_amount(user_id)
+    reports_amount += 1
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('UPDATE users SET reports_amount = ?'
+                'WHERE user_id = ?', (reports_amount, user_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_reported_profile():
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE reports_amount = (SELECT MAX(reports_amount) FROM users)")
+    user = cur.fetchall()[0]
+    cur.close()
+    conn.close()
+    return user
+
+
+def reset_reports_amount(user_id):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    cur.execute('UPDATE users SET reports_amount = ?'
+                'WHERE user_id = ?', (0, user_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
@@ -1525,11 +1645,12 @@ def admin(message):
         btn5 = types.KeyboardButton('🥳Модерировать мероприятия')
         btn7 = types.KeyboardButton('✅Активировать мероприятия')
         btn6 = types.KeyboardButton('💬Разослать всем сообщение')
+        btn8 = types.KeyboardButton('📝Репортнутый профиль')
 
         reply_markup.row(btn1, btn2)
         reply_markup.row(btn3, btn4)
         reply_markup.row(btn5, btn7)
-        reply_markup.row(btn6)
+        reply_markup.row(btn6, btn8)
 
         bot.send_message(524931933, "Привет, админ! Выбери, что ты хочешь сделать", reply_markup=reply_markup)
         bot.register_next_step_handler(message, handle_admin)
@@ -1560,6 +1681,44 @@ def handle_admin(message):
         return handle_admin_activate_event(message)
     elif message.text == "💬Разослать всем сообщение":
         return handle_send_message_to_everyone(message)
+    elif message.text == "📝Репортнутый профиль":
+        return handle_reported_profile(message)
+
+
+def handle_reported_profile(message):
+    user_id = message.chat.id
+    if message.text == "/menu":
+        return menu(message)
+    if message.text == '/start':
+        return start(message)
+    if message.text == '/profile':
+        return profile(message)
+    if message.text == '/cancel':
+        return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
+    response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True, is_persistent=True)
+    btn1 = types.KeyboardButton("✅Оставить пользователя")
+    btn2 = types.KeyboardButton("❌Удалить пользователя")
+    response_markup.row(btn1, btn2)
+    reported_profile = get_reported_profile()
+    bot.send_photo(user_id, photo=open(reported_profile[6], 'rb'),
+                   caption=f"{reported_profile[2]}, {reported_profile[3]}\n{reported_profile[5]}\n"
+                           f"Жалоб: {reported_profile[15]}",
+                   reply_markup=response_markup)
+    bot.register_next_step_handler(message, reported_profile_action)
+
+
+def reported_profile_action(message):
+    reported_user_id = get_reported_profile()[1]
+    if message.text == "❌Удалить пользователя":
+        bot.send_message(reported_user_id, "Твой профиль собрал очень много жалоб и был удален, создай новый "
+                                           "в /start, но в этот раз вводи достоверные данные и веди себя адеквтано в "
+                                           "боте!")
+        delete_user(reported_user_id)
+    if message.text == "✅Оставить пользователя":
+        reset_reports_amount(reported_user_id)
+    return
 
 
 def handle_admin_activate_event(message):
@@ -1752,6 +1911,8 @@ def send_message_to_everyone(message):
 
 @bot.message_handler(commands=['menu'])
 def menu(message):
+    create_blocks_table()
+    create_reports_amount_column()
     user_id = message.chat.id
     if not check_user_exists(user_id):
         bot.send_message(user_id, "Сначала создай профиль, используя /start",
@@ -1764,7 +1925,7 @@ def menu(message):
     btn1 = types.KeyboardButton('🤝Знакомства')
     btn2 = types.KeyboardButton('🧠Проекты')
     btn3 = types.KeyboardButton('🥳Мероприятия')
-    btn4 = types.KeyboardButton('Другое')
+    btn4 = types.KeyboardButton(f'Сообщество {university_name}')
 
     menu_markup.row(btn1)
     menu_markup.row(btn2)
@@ -1834,7 +1995,7 @@ def handle_menu(message):
         bot.send_message(user_id, "Выбери одну из опций", reply_markup=events_markup)
         bot.register_next_step_handler(message, handle_menu_choice)
 
-    elif message.text == "Другое":
+    elif message.text == f'Сообщество {university_name}':
         create_questions_answers_tables()
         bot.send_message(user_id,
                          f"Привет 👋\nВ этом разделе ты можешь задать вопросы всему сообществу {university_name},"
@@ -1869,8 +2030,16 @@ def handle_menu_choice(message):
     user_id = message.chat.id
 
     if message.text == "🔍Поиск друзей":
+        remove_expired_blocks()
         clear_seen_friends(user_id)
-        return send_profile_first(message)
+        search_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True, is_persistent=True)
+        btn1 = types.KeyboardButton("Парень 👨")
+        btn2 = types.KeyboardButton("Девушка 👩")
+        btn3 = types.KeyboardButton("Неважно")
+        search_markup.row(btn1, btn2)
+        search_markup.row(btn3)
+        bot.send_message(user_id, "Кого ты хочешь найти?", reply_markup=search_markup)
+        bot.register_next_step_handler(message, handle_search_choice)
 
     elif message.text == "❤️Лайки на мой профиль":
         like_received_id = get_like_received(user_id)
@@ -1912,6 +2081,31 @@ def handle_menu_choice(message):
         return menu(message)
 
 
+def handle_search_choice(message):
+    user_id = message.chat.id
+    if message.text == "/menu":
+        return menu(message)
+    if message.text == '/start':
+        return start(message)
+    if message.text == '/profile':
+        return profile(message)
+    if message.text == '/cancel':
+        return cancel(message)
+    if message.text == '/delete':
+        return delete(message)
+    if message.text == "Парень 👨":
+        set_looking_for(user_id, 1)
+    elif message.text == "Девушка 👩":
+        set_looking_for(user_id, 2)
+    elif message.text == "Неважно":
+        set_looking_for(user_id, 3)
+    else:
+        bot.send_message(user_id, "Используй кнопки, попробуй заново в /menu",
+                         reply_markup=types.ReplyKeyboardRemove())
+        return
+    return send_profile_first(message)
+
+
 def send_profile_first(message):
     if message.text == "/menu":
         return menu(message)
@@ -1924,48 +2118,52 @@ def send_profile_first(message):
     if message.text == '/delete':
         return delete(message)
     user_id = message.chat.id
-    found_id = get_found_id(user_id)
     uid = get_id(user_id)
+    found_id = get_found_id(user_id)
+    found_user_id = get_user_id(found_id)
     if user_id == 524931933 and message.text == 'Удалить пользователя':
-        found_user_id = get_user_id(found_id)
         try:
             bot.send_message(found_user_id, "Твой профиль был удален, так как информация в нем показалась "
-                                            "администрации недействительной")
+                                            "нам недействительной")
         except telebot.apihelper.ApiTelegramException:
             pass
         delete_user(found_user_id)
     if message.text == "❤️":
         like_happened(uid, found_id)
         set_seen_friends(user_id, found_id)
-        found_user_id = get_user_id(found_id)
         try:
-            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
-
-    elif message.text != "🔍Поиск друзей":
+    elif message.text == "Пожаловаться ⚠️":
+        set_seen_friends(user_id, found_id)
+        got_reported(found_user_id)
+        block_user(user_id, found_user_id)
+    elif message.text != "Парень 👨" and message.text != "Девушка 👩" and message.text != "Неважно":
         set_seen_friends(user_id, found_id)
 
     response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
+    btn3 = types.KeyboardButton('Пожаловаться ⚠️')
     response_markup.row(btn1, btn2)
+    response_markup.row(btn3)
     if user_id == 524931933:
-        btn3 = types.KeyboardButton('Удалить пользователя')
-        response_markup.row(btn3)
+        btn4 = types.KeyboardButton('Удалить пользователя')
+        response_markup.row(btn4)
+    users_uids = get_user_uids(user_id)
     found_id = uid
-    found_user_id = user_id
     possible = True
-    users_uids = get_user_uids()
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
-        if len(users_uids) == 1:
+    while is_in_seen_friends(user_id, found_id) or found_id == uid:
+        if found_id in users_uids:
+            users_uids.remove(found_id)
+        if len(users_uids) == 0:
             possible = False
             break
-        users_uids.remove(found_id)
+
         index = random.randint(0, len(users_uids) - 1)
         found_id = users_uids[index]
-        found_user_id = get_user_id(found_id)
 
     if not possible:
         reply_markup = types.ReplyKeyboardRemove()
@@ -1995,15 +2193,16 @@ def send_profile_second(message):
     if message.text == '/delete':
         return delete(message)
     user_id = message.chat.id
-    found_id = get_found_id(user_id)
     uid = get_id(user_id)
+    found_id = get_found_id(user_id)
+    found_user_id = get_user_id(found_id)
 
     set_seen_friends(user_id, found_id)
     if user_id == 524931933 and message.text == 'Удалить пользователя':
         found_user_id = get_user_id(found_id)
         try:
             bot.send_message(found_user_id, "Твой профиль был удален, так как информация в нем показалась "
-                                            "администрации недействительной")
+                                            "нам недействительной")
         except telebot.apihelper.ApiTelegramException:
             pass
         delete_user(found_user_id)
@@ -2011,30 +2210,35 @@ def send_profile_second(message):
         like_happened(uid, found_id)
         found_user_id = get_user_id(found_id)
         try:
-            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(found_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
-
+    elif message.text == "Пожаловаться ⚠️":
+        got_reported(found_user_id)
+        block_user(user_id, found_user_id)
     response_markup = types.ReplyKeyboardMarkup(is_persistent=True, resize_keyboard=True)
     btn1 = types.KeyboardButton('❤️')
     btn2 = types.KeyboardButton('👎')
+    btn3 = types.KeyboardButton('Пожаловаться ⚠️')
     response_markup.row(btn1, btn2)
+    response_markup.row(btn3)
     if user_id == 524931933:
-        btn3 = types.KeyboardButton('Удалить пользователя')
-        response_markup.row(btn3)
-    found_id = uid
-    found_user_id = user_id
-    possible = True
-    users_uids = get_user_uids()
+        btn4 = types.KeyboardButton('Удалить пользователя')
+        response_markup.row(btn4)
 
-    while is_in_seen_friends(user_id, found_id) or not check_user_exists(found_user_id) or found_user_id == user_id:
-        if len(users_uids) == 1:
+    users_uids = get_user_uids(user_id)
+    found_id = uid
+    possible = True
+
+    while is_in_seen_friends(user_id, found_id) or found_id == uid:
+        if found_id in users_uids:
+            users_uids.remove(found_id)
+        if len(users_uids) == 0:
             possible = False
             break
-        users_uids.remove(found_id)
+
         index = random.randint(0, len(users_uids) - 1)
         found_id = users_uids[index]
-        found_user_id = get_user_id(found_id)
 
     if not possible:
         reply_markup = types.ReplyKeyboardRemove()
@@ -2051,6 +2255,7 @@ def send_profile_second(message):
     bot.register_next_step_handler(message, send_profile_second)
 
 
+@bot.message_handler(commands=['likes'])
 def send_like_first(message):
     if message.text == "/menu":
         return menu(message)
@@ -2092,7 +2297,9 @@ def send_like_first(message):
         response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
+        btn3 = types.KeyboardButton('Заблокировать пользователя на 3 дня')
         response_markup.row(btn1, btn2)
+        response_markup.row(btn3)
         bot.send_photo(user_id, photo=open(get_photo_by_id(like_received_id), "rb"),
                        caption=f"{get_name_by_id(like_received_id)}, {get_age_by_id(like_received_id)}\n"
                                f"{get_school_by_id(like_received_id)}\n\nЭтот пользователь лайкнул твой про"
@@ -2131,10 +2338,11 @@ def send_like_second(message):
 
         like_received_user_id = get_user_id(like_received_id)
         try:
-            bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /menu чтобы посмотреть")
+            bot.send_message(like_received_user_id, "👀Кто-то лайкнул твой профиль. Используй /likes чтобы посмотреть")
         except telebot.apihelper.ApiTelegramException:
             pass
-
+    if message.text == "Заблокировать пользователя на 3 дня":
+        block_user(user_id, like_received_user_id)
     delete_first_like_received(user_id, like_received_id)
 
     like_received_id = get_like_received(user_id)
@@ -2163,7 +2371,9 @@ def send_like_second(message):
         response_markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, is_persistent=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('❤️')
         btn2 = types.KeyboardButton('👎')
+        btn3 = types.KeyboardButton('Заблокировать пользователя на 3 дня')
         response_markup.row(btn1, btn2)
+        response_markup.row(btn3)
         bot.send_photo(user_id, photo=open(get_photo_by_id(like_received_id), "rb"),
                        caption=f"{get_name_by_id(like_received_id)}, {get_age_by_id(like_received_id)}\n"
                                f"{get_school_by_id(like_received_id)}\n\nЭтот пользователь лайкнул ваш профиль. Лайкни"
