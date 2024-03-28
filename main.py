@@ -6,13 +6,13 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 
-bot = telebot.TeleBot('6373983672:AAFJPyO1sR_nAm0ae3A4qeR-vhWExuRk7i8')
+bot = telebot.TeleBot('')
 checked_event_index = 0
-database = 'reu_zephyr.sql'
-university_name = 'РЭУ'
-university_name_english = 'REU'
-schools = ['ИПАМ', 'ВШКМиС', 'ВШФ', 'ВШСГН', 'ВИШ НМИТ', 'ВШЭИБ', 'ВШМ', 'ВШКИ', 'ВШП', 'Преподователь']
-ask_school_text = "С какой ты высшей школы?"
+database = ''
+university_name = ''
+university_name_english = ''
+schools = []
+ask_school_text = ""
 
 
 def create_users_table():
